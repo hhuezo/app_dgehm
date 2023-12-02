@@ -10,7 +10,7 @@ export function CensoLuminariaStack() {
       <Stack.Screen
         name="CensoLuminariaScreen"
         component={CensoLuminariaScreen}
-        options={{ title: "Censo luminaria" }}
+        options={{ title: "Censo de luminaria" }}
       />
     </Stack.Navigator>
   )
