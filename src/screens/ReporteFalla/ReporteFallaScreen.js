@@ -18,10 +18,14 @@ import RNPickerSelect from "react-native-picker-select";
 
 import * as ImagePicker from "expo-image-picker";
 
-import {  ALERT_TYPE,  Dialog,  AlertNotificationRoot,  Toast,} from "react-native-alert-notification";
+import {
+  ALERT_TYPE,
+  Dialog,
+  AlertNotificationRoot,
+  Toast,
+} from "react-native-alert-notification";
 
-
-import * as Location from 'expo-location';
+import * as Location from "expo-location";
 
 export function ReporteFallaScreen() {
   const [departamentos, setDepartamentos] = useState([]);
@@ -70,22 +74,23 @@ export function ReporteFallaScreen() {
     const getLocation = async () => {
       try {
         let { status } = await Location.requestForegroundPermissionsAsync();
-        if (status !== 'granted') {
-          setErrorMsg('Permission to access location was denied');
+        if (status !== "granted") {
+          setErrorMsg("Permission to access location was denied");
           return;
         }
 
         let location = await Location.getCurrentPositionAsync({});
         setLocation(location);
       } catch (error) {
-        console.error('Error getting location:', error);
+        console.error("Error getting location:", error);
       }
     };
 
     const requestCameraPermission = async () => {
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (status !== 'granted') {
-        console.error('Permission to access camera roll was denied!');
+      const { status } =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== "granted") {
+        console.error("Permission to access camera roll was denied!");
       }
     };
 
@@ -125,7 +130,14 @@ export function ReporteFallaScreen() {
 
   const handSendData = async () => {
     // Validar que los campos obligatorios no sean nulos
-    if (!distritoId || !tipoFallaId || !descripcion || !nombre || !telefono || !location) {
+    if (
+      !distritoId ||
+      !tipoFallaId ||
+      !descripcion ||
+      !nombre ||
+      !telefono ||
+      !location
+    ) {
       //alert("Por favor, completa todos los campos obligatorios.");
       Dialog.show({
         type: ALERT_TYPE.DANGER,
@@ -134,26 +146,83 @@ export function ReporteFallaScreen() {
         button: "Cerrar",
       });
       return;
-    }
-    else{
-
+    } else {
       console.log(location.coords.latitude);
       console.log(location.coords.longitude);
-      Dialog.show({
-        type: ALERT_TYPE.SUCCESS,
-        title: "Ok",
-        textBody: "Regitro ingresado correctamente",
-        button: "Cerrar",
-      });
-      return;
+
+      // Datos a enviar en el cuerpo de la solicitud
+      const data = {
+        distrito_id: distritoId,
+        tipo_falla_id: tipoFallaId,
+        descripcion: descripcion,
+        latitud: location.coords.latitude,
+        longitud: location.coords.longitude,
+        telefono_contacto: telefono,
+        nombre_contacto: nombre,
+        imagen: image ? image.base64 : null,
+      };
+
+      //console.log(image.base64);
+   
+      // URL de la API
+      const apiUrl = `${API_HOST}/api_reporte_falla`;
+
+      // Configuración de la solicitud
+      const requestOptions = {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data), // Convierte los datos a formato JSON
+      };
+
+      try {
+        response = await fetch(apiUrl, requestOptions);
+
+        const responseBody = await response.json(); // Lee el cuerpo de la respuesta una vez
+
+        console.log("Body:", responseBody);
+
+        // Manejar la respuesta del servidor
+        if (!response.ok) {
+          throw new Error(
+            `Error al realizar la solicitud: ${response.status} - ${response.statusText}`
+          );
+        }
+
+        //alert(responseBody.mensaje);
+
+        if (responseBody.value === "1") {
+          Dialog.show({
+            type: ALERT_TYPE.SUCCESS,
+            title: "Ok",
+            textBody: "Regitro ingresado correctamente",
+            button: "Cerrar",
+          });
+
+          //set a variables
+        setDepartamentoId(null);
+          setDistritoId(null);
+          setTipoFallaId(null);
+          setDescripcion("");
+          setNombre("");
+          setTelefono("");
+          setImage(null);
+          return;
+
+
+        }
+      } catch (error) {
+        Dialog.show({
+          type: ALERT_TYPE.DANGER,
+          title: "Error",
+          textBody: "Error al realizar la solicitud",
+          button: "Cerrar",
+        });
+        return;
+        console.error("Error al realizar la solicitud:", error);
+      }
     }
-
-
-
-
-
-
-
   };
 
   const pickImage = async () => {
@@ -165,9 +234,20 @@ export function ReporteFallaScreen() {
         quality: 1,
       });
 
+      console.log("ImagePicker Result:", result);
+
       if (!result.canceled) {
-        // Acceder a las imágenes seleccionadas a través del array "assets"
-        setImage(result.assets[0].uri);
+        // Cargar el archivo desde la ruta (uri) y convertirlo a base64
+        const response = await fetch(result.assets[0].uri);
+        const blob = await response.blob();
+        const base64 = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result.split(",")[1]);
+          reader.onerror = (error) => reject(error);
+          reader.readAsDataURL(blob);
+        });
+
+        setImage({ uri: result.assets[0].uri, base64 });
       }
     } catch (error) {
       console.error("Error picking an image", error);
@@ -182,7 +262,6 @@ export function ReporteFallaScreen() {
   return (
     <ScrollView>
       <View style={styles.container}>
-
         <Text style={styles.label}>DEPARTAMENTO</Text>
 
         <View style={styles.formControl}>
@@ -288,13 +367,13 @@ export function ReporteFallaScreen() {
           <Text style={styles.label}>FOTOGRAFIA</Text>
           <Button title="Seleccionar imagen" onPress={pickImage} />
           <View style={styles.formControlImage}>
-          {image && (
-            <Image
-              source={{ uri: image }}
-              style={{ width: 200, height: 200, borderRadius: 100 }}
-            />
-          )}
-         </View>
+            {image && (
+              <Image
+                source={{ uri: image.uri }}
+                style={{ width: 200, height: 200, borderRadius: 100 }}
+              />
+            )}
+          </View>
         </View>
         <TouchableOpacity
           style={{
@@ -309,8 +388,7 @@ export function ReporteFallaScreen() {
           <Text style={{ color: "white", fontSize: 18 }}>Enviar</Text>
         </TouchableOpacity>
       </View>
-      <AlertNotificationRoot>     
-    </AlertNotificationRoot>
+      <AlertNotificationRoot></AlertNotificationRoot>
     </ScrollView>
   );
 }
