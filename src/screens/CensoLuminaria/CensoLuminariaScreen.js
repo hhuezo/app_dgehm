@@ -314,8 +314,8 @@ export function CensoLuminariaScreen() {
            }); 
 
             // Restablecer variables a su estado original
-            setDepartamentoId(null);
-            setDistritoId(null);
+            //setDepartamentoId(null);
+            //setDistritoId(null);
             setTipoLuminariaId(null);
             setCodigo("");
             setPotenciaPromedio([]);
