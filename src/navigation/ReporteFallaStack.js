@@ -10,7 +10,7 @@ export  function ReporteFallaStack() {
       <Stack.Screen
         name="ReporteFallaStack"
         component={ReporteFallaScreen}
-        options={{ title: "Reporte falla" }}
+        options={{ title: "Reporte de falla" }}
       />
     </Stack.Navigator>
   )

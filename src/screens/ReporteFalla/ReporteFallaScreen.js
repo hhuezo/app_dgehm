@@ -20,6 +20,9 @@ import * as ImagePicker from "expo-image-picker";
 
 import {  ALERT_TYPE,  Dialog,  AlertNotificationRoot,  Toast,} from "react-native-alert-notification";
 
+
+import * as Location from 'expo-location';
+
 export function ReporteFallaScreen() {
   const [departamentos, setDepartamentos] = useState([]);
   const [departamentoId, setDepartamentoId] = useState();
@@ -31,6 +34,10 @@ export function ReporteFallaScreen() {
   const [nombre, setNombre] = useState();
   const [telefono, setTelefono] = useState();
   const [image, setImage] = useState(null);
+
+  //localización
+  const [location, setLocation] = useState(null);
+  const [errorMsg, setErrorMsg] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -60,15 +67,31 @@ export function ReporteFallaScreen() {
       }
     };
 
-    async () => {
-      const { status } =
-        await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (status !== "granted") {
-        console.error("Permission to access camera roll was denied!");
+    const getLocation = async () => {
+      try {
+        let { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== 'granted') {
+          setErrorMsg('Permission to access location was denied');
+          return;
+        }
+
+        let location = await Location.getCurrentPositionAsync({});
+        setLocation(location);
+      } catch (error) {
+        console.error('Error getting location:', error);
+      }
+    };
+
+    const requestCameraPermission = async () => {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        console.error('Permission to access camera roll was denied!');
       }
     };
 
     fetchData();
+    getLocation();
+    requestCameraPermission();
   }, []);
 
   const fetchDataDistritos = async (value) => {
@@ -102,7 +125,7 @@ export function ReporteFallaScreen() {
 
   const handSendData = async () => {
     // Validar que los campos obligatorios no sean nulos
-    if (!distritoId || !tipoFallaId || !descripcion || !nombre || !telefono) {
+    if (!distritoId || !tipoFallaId || !descripcion || !nombre || !telefono || !location) {
       //alert("Por favor, completa todos los campos obligatorios.");
       Dialog.show({
         type: ALERT_TYPE.DANGER,
@@ -113,6 +136,9 @@ export function ReporteFallaScreen() {
       return;
     }
     else{
+
+      console.log(location.coords.latitude);
+      console.log(location.coords.longitude);
       Dialog.show({
         type: ALERT_TYPE.SUCCESS,
         title: "Ok",
@@ -121,6 +147,9 @@ export function ReporteFallaScreen() {
       });
       return;
     }
+
+
+
 
 
 
@@ -153,6 +182,7 @@ export function ReporteFallaScreen() {
   return (
     <ScrollView>
       <View style={styles.container}>
+
         <Text style={styles.label}>DEPARTAMENTO</Text>
 
         <View style={styles.formControl}>
