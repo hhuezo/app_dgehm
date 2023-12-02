@@ -219,7 +219,7 @@ export function CensoLuminariaScreen() {
       Dialog.show({
         type: ALERT_TYPE.DANGER,
         title: "Error",
-        textBody: "Por favor, completa todos los campos obligatorios1.",
+        textBody: "Por favor, completa todos los campos obligatorios.",
         button: "Cerrar",
       });
       return;
