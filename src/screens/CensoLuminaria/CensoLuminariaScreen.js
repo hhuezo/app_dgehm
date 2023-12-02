@@ -251,7 +251,7 @@ export function CensoLuminariaScreen() {
     return;
   }
     else {
-      console.log("aaa");
+      //console.log("aaa");
 
       const formattedDate = `${dateFecha.getFullYear()}-${padZero(
         dateFecha.getMonth() + 1
@@ -312,6 +312,19 @@ export function CensoLuminariaScreen() {
              textBody: "Regitro ingresado correctamente",
              button: "Cerrar",
            }); 
+
+            // Restablecer variables a su estado original
+            setDepartamentoId(null);
+            setDistritoId(null);
+            setTipoLuminariaId(null);
+            setCodigo("");
+            setPotenciaPromedio([]);
+            setPotenciaPromedioId("");
+            setConsumoPromedio("");
+            setPotenciaNominal("");
+            setIsEditable(false);
+            setDencidad("");
+            setDateFecha(new Date());
 
            return;
  
