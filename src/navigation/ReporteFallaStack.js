@@ -1,17 +1,23 @@
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { ReporteFallaScreen } from "../screens/ReporteFalla/ReporteFallaScreen";
-import React from 'react'
+import { ReporteMapaScreen } from "../screens/ReporteFalla/ReporteMapaScreen";
+import React from "react";
 
 const Stack = createNativeStackNavigator();
 
-export  function ReporteFallaStack() {
+export function ReporteFallaStack() {
   return (
     <Stack.Navigator>
+      <Stack.Screen
+        name="ReporteMapaStack"
+        component={ReporteMapaScreen}
+        options={{ title: "Ubica el punto" }}
+      />
       <Stack.Screen
         name="ReporteFallaStack"
         component={ReporteFallaScreen}
         options={{ title: "Reporte de falla" }}
       />
     </Stack.Navigator>
-  )
+  );
 }

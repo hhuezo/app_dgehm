@@ -25,9 +25,9 @@ import {
   Toast,
 } from "react-native-alert-notification";
 
-import * as Location from "expo-location";
-
-export function ReporteFallaScreen() {
+export function ReporteFallaScreen(props) {
+  const { latitude, longitude } = props.route.params;
+  const { navigation } = props;
   const [departamentos, setDepartamentos] = useState([]);
   const [departamentoId, setDepartamentoId] = useState();
   const [distritos, setDistritos] = useState([]);
@@ -38,10 +38,6 @@ export function ReporteFallaScreen() {
   const [nombre, setNombre] = useState();
   const [telefono, setTelefono] = useState();
   const [image, setImage] = useState(null);
-
-  //localización
-  const [location, setLocation] = useState(null);
-  const [errorMsg, setErrorMsg] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -71,21 +67,6 @@ export function ReporteFallaScreen() {
       }
     };
 
-    const getLocation = async () => {
-      try {
-        let { status } = await Location.requestForegroundPermissionsAsync();
-        if (status !== "granted") {
-          setErrorMsg("Permission to access location was denied");
-          return;
-        }
-
-        let location = await Location.getCurrentPositionAsync({});
-        setLocation(location);
-      } catch (error) {
-        console.error("Error getting location:", error);
-      }
-    };
-
     const requestCameraPermission = async () => {
       const { status } =
         await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -95,7 +76,6 @@ export function ReporteFallaScreen() {
     };
 
     fetchData();
-    getLocation();
     requestCameraPermission();
   }, []);
 
@@ -130,14 +110,7 @@ export function ReporteFallaScreen() {
 
   const handSendData = async () => {
     // Validar que los campos obligatorios no sean nulos
-    if (
-      !distritoId ||
-      !tipoFallaId ||
-      !descripcion ||
-      !nombre ||
-      !telefono ||
-      !location
-    ) {
+    if (!distritoId || !tipoFallaId || !descripcion || !nombre || !telefono) {
       //alert("Por favor, completa todos los campos obligatorios.");
       Dialog.show({
         type: ALERT_TYPE.DANGER,
@@ -146,24 +119,29 @@ export function ReporteFallaScreen() {
         button: "Cerrar",
       });
       return;
+    } else if (!latitude || !longitude) {
+      Dialog.show({
+        type: ALERT_TYPE.DANGER,
+        title: "Error",
+        textBody: "Por favor, debe ingresar la ubicación en el mapa.",
+        button: "Cerrar",
+      });
+      return;
     } else {
-      console.log(location.coords.latitude);
-      console.log(location.coords.longitude);
-
       // Datos a enviar en el cuerpo de la solicitud
       const data = {
         distrito_id: distritoId,
         tipo_falla_id: tipoFallaId,
         descripcion: descripcion,
-        latitud: location.coords.latitude,
-        longitud: location.coords.longitude,
+        latitud: latitude,
+        longitud: longitude,
         telefono_contacto: telefono,
         nombre_contacto: nombre,
         imagen: image ? image.base64 : null,
       };
 
       //console.log(image.base64);
-   
+
       // URL de la API
       const apiUrl = `${API_HOST}/api_reporte_falla`;
 
@@ -190,27 +168,38 @@ export function ReporteFallaScreen() {
           );
         }
 
-        //alert(responseBody.mensaje);
+       
 
-        if (responseBody.value === "1") {
-          Dialog.show({
+       if (responseBody.value === "1") {
+        alert("Regitro ingresado correctamente");
+        /*   Dialog.show({
             type: ALERT_TYPE.SUCCESS,
             title: "Ok",
             textBody: "Regitro ingresado correctamente",
             button: "Cerrar",
-          });
+          });*/
 
           //set a variables
-        setDepartamentoId(null);
+          setDepartamentoId(null);
           setDistritoId(null);
           setTipoFallaId(null);
           setDescripcion("");
           setNombre("");
           setTelefono("");
           setImage(null);
+
+          navigation.navigate("ReporteFalla", { screen: "ReporteMapaStack" });
+
+          //  return;
+        }
+        else{
+          Dialog.show({
+            type: ALERT_TYPE.DANGER,
+            title: "Error",
+            textBody: "Error al realizar la solicitud",
+            button: "Cerrar",
+          });
           return;
-
-
         }
       } catch (error) {
         Dialog.show({
