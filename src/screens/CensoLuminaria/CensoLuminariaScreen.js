@@ -442,6 +442,16 @@ export function CensoLuminariaScreen() {
           )}
         </View>
 
+
+        <View style={styles.formControlNumber}>
+          <Text style={styles.label}>CONSUMO MENSUAL</Text>
+          <TextInput
+            style={styles.textInput}
+            value={consumoPromedio}
+            editable={false}
+          />
+        </View>
+
         <View style={styles.formControlNumber}>
           <Text style={styles.label}>CODIGO LUMINARIA</Text>
           <TextInput
@@ -452,14 +462,6 @@ export function CensoLuminariaScreen() {
           />
         </View>
 
-        <View style={styles.formControlNumber}>
-          <Text style={styles.label}>CONSUMO MENSUAL</Text>
-          <TextInput
-            style={styles.textInput}
-            value={consumoPromedio}
-            editable={false}
-          />
-        </View>
 
         <View style={styles.formControlNumber}>
           <Text style={styles.label}>POTENCIA NOMINAL</Text>

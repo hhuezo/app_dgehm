@@ -33,7 +33,7 @@ function screenOptions(route, color, size) {
   }
 
   if (route.name === "CensoLuminaria") {
-    iconName = "cash";
+    iconName = "folder-plus-outline";
   }
 
 
