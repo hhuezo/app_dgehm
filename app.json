@@ -22,7 +22,12 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.hhuezo.DGEHM"
+      "package": "com.hhuezo.DGEHM",
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyDGYK-xTISJUVZC-pUBj1Zd3sMiUCdXUeg"
+        }
+      }
     },
     "web": {
       "favicon": "./assets/favicon.png"
