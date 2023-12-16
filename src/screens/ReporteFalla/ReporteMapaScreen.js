@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import MapView, { Marker, Callout } from "react-native-maps";
-import { StyleSheet, View, Button, Alert, Text } from "react-native";
+import { StyleSheet, View, Button, Alert, Text,ActivityIndicator } from "react-native";
 import * as Location from "expo-location";
 import { API_HOST } from "../../utils/constants";
 
@@ -12,6 +12,7 @@ export function ReporteMapaScreen(props) {
   let distritoId = "";
   let departamentoNombre = "";
   let distritoNombre = "";
+  const [isLoading, setIsLoading] = useState(false); 
 
   useEffect(() => {
     (async () => {
@@ -40,6 +41,7 @@ export function ReporteMapaScreen(props) {
   const goToReporteFalla = async () => {
     if (markerLocation) {
       try {
+        setIsLoading(true);
         // Llamamos primero a obtenerUbicacion
         await obtenerUbicacion(
           markerLocation.latitude,
@@ -60,6 +62,9 @@ export function ReporteMapaScreen(props) {
         });
       } catch (error) {
         console.error("Error en la navegación:", error);
+      }
+      finally {
+        setIsLoading(false); // Ocultar imagen de carga
       }
     } else {
       Alert.alert("Error", "No se ha seleccionado una ubicación válida.");
@@ -82,11 +87,7 @@ export function ReporteMapaScreen(props) {
 
           departamentoNombre = departamento;
           distritoNombre = municipio;
-        //console.log(departamento);
-        //console.log(municipio);
 
-        //getDepartamento(departamento);
-        //getDistrito(municipio);
       } else {
         console.log("No se pudo obtener la información de ubicación.");
       }
@@ -165,6 +166,12 @@ export function ReporteMapaScreen(props) {
         )}
       </MapView>
       <Button title="Aceptar ubicación" onPress={goToReporteFalla} />
+
+      {isLoading && (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#0000ff" />
+        </View>
+      )}
     </View>
   );
 }
@@ -181,5 +188,15 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     textAlign: "center",
     marginVertical: 10,
+  },
+  loadingContainer: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: 0,
+    right: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.7)',
   },
 });
