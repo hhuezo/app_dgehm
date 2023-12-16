@@ -2,12 +2,16 @@ import React, { useState, useEffect } from "react";
 import MapView, { Marker, Callout } from "react-native-maps";
 import { StyleSheet, View, Button, Alert, Text } from "react-native";
 import * as Location from "expo-location";
+import { API_HOST } from "../../utils/constants";
 
 export function ReporteMapaScreen(props) {
-
   const { navigation } = props;
   const [location, setLocation] = useState(null);
   const [markerLocation, setMarkerLocation] = useState(null);
+  let departamentoId = "";
+  let distritoId = "";
+  let departamentoNombre = "";
+  let distritoNombre = "";
 
   useEffect(() => {
     (async () => {
@@ -33,17 +37,98 @@ export function ReporteMapaScreen(props) {
     setMarkerLocation(e.nativeEvent.coordinate);
   };
 
-  
-  const goToReporteFalla = () => {
+  const goToReporteFalla = async () => {
     if (markerLocation) {
-     /* console.log(        "Coordenadas del Marker:",        markerLocation.latitude,        markerLocation.longitude      );*/
-  
-      navigation.navigate("ReporteFallaStack", {
-        latitude: markerLocation.latitude,
-        longitude: markerLocation.longitude,
-      });
+      try {
+        // Llamamos primero a obtenerUbicacion
+        await obtenerUbicacion(
+          markerLocation.latitude,
+          markerLocation.longitude
+        );
+
+        // Después de obtener la ubicación, llamamos a getDepartamento y getDistrito
+        const [departamento, distrito] = await Promise.all([
+          getDepartamento(departamentoNombre),
+          getDistrito(distritoNombre),
+        ]);
+
+        navigation.navigate("ReporteFallaStack", {
+          latitude: markerLocation.latitude,
+          longitude: markerLocation.longitude,
+          idDepartamento: departamentoId,
+          idDistrito: distritoId,
+        });
+      } catch (error) {
+        console.error("Error en la navegación:", error);
+      }
     } else {
       Alert.alert("Error", "No se ha seleccionado una ubicación válida.");
+    }
+  };
+
+  const obtenerUbicacion = async (latitud, longitud) => {
+    try {
+      const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitud}&lon=${longitud}`;
+      const response = await fetch(url);
+      const data = await response.json();
+
+      if (data.address) {
+        const departamento = data.address.state;
+        const municipio =
+          data.address.city ||
+          data.address.town ||
+          data.address.village ||
+          data.address.county;
+
+          departamentoNombre = departamento;
+          distritoNombre = municipio;
+        //console.log(departamento);
+        //console.log(municipio);
+
+        //getDepartamento(departamento);
+        //getDistrito(municipio);
+      } else {
+        console.log("No se pudo obtener la información de ubicación.");
+      }
+    } catch (error) {
+      console.log(
+        "Error al obtener la información de ubicación:",
+        error.message
+      );
+    }
+  };
+
+  const getDepartamento = async (nombre) => {
+    try {
+      const baseUrl = `${API_HOST}/api_get_departamento_id`;
+      const urlCompleta = `${baseUrl}/${nombre}`;
+      console.log(urlCompleta);
+      const response = await fetch(urlCompleta);
+      const data = await response.json();
+      departamentoId = data.departamentoId;
+      //console.log("dep: ",departamentoId);
+    } catch (error) {
+      console.log(
+        "Error al obtener la información del departamento:",
+        error.message
+      );
+    }
+  };
+
+  const getDistrito = async (nombre) => {
+    try {
+      const baseUrl = `${API_HOST}/api_get_distrito_id`;
+      const urlCompleta = `${baseUrl}/${nombre}`;
+      console.log(urlCompleta);
+      const response = await fetch(urlCompleta);
+      const data = await response.json();
+      distritoId = data.distritoId;
+      console.log("distrito: ", distritoId);
+    } catch (error) {
+      console.log(
+        "Error al obtener la información del departamento:",
+        error.message
+      );
     }
   };
 

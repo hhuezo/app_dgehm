@@ -22,12 +22,10 @@ import {
   ALERT_TYPE,
   Dialog,
   AlertNotificationRoot,
-  Toast,
 } from "react-native-alert-notification";
 
 export function ReporteFallaScreen(props) {
-  const { latitude, longitude } = props.route.params;
-  const { navigation } = props;
+
   const [departamentos, setDepartamentos] = useState([]);
   const [departamentoId, setDepartamentoId] = useState();
   const [distritos, setDistritos] = useState([]);
@@ -39,7 +37,16 @@ export function ReporteFallaScreen(props) {
   const [telefono, setTelefono] = useState();
   const [image, setImage] = useState(null);
 
+  const { latitude, longitude,idDepartamento,idDistrito } = props.route.params;
+  const { navigation } = props;
+
+
+
   useEffect(() => {
+
+    setDepartamentoId(idDepartamento);
+    setDistritoId(idDistrito);
+
     const fetchData = async () => {
       try {
         const response = await fetch(`${API_HOST}/api_reporte_falla/create`);
