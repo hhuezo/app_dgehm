@@ -179,13 +179,7 @@ export function ReporteFallaScreen(props) {
 
        if (responseBody.value === "1") {
         alert("Regitro ingresado correctamente");
-        /*   Dialog.show({
-            type: ALERT_TYPE.SUCCESS,
-            title: "Ok",
-            textBody: "Regitro ingresado correctamente",
-            button: "Cerrar",
-          });*/
-
+  
           //set a variables
           setDepartamentoId(null);
           setDistritoId(null);
@@ -195,7 +189,7 @@ export function ReporteFallaScreen(props) {
           setTelefono("");
           setImage(null);
 
-          navigation.navigate("ReporteFalla", { screen: "ReporteMapaStack" });
+          navigation.navigate("ReporteFalla", { screen: "ReporteIndexStack" });
 
           //  return;
         }
