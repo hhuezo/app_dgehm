@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect,useReducer } from "react";
 import MapView, { Marker, Callout } from "react-native-maps";
 import { StyleSheet, View, Button, Alert, Text,ActivityIndicator } from "react-native";
 import * as Location from "expo-location";
@@ -13,6 +13,9 @@ export function ReporteMapaScreen(props) {
   let departamentoNombre = "";
   let distritoNombre = "";
   const [isLoading, setIsLoading] = useState(false); 
+
+  const [, forceUpdate] = useReducer((x) => x + 1, 0); // Hook para forzar la actualización de la vista
+
 
   useEffect(() => {
     (async () => {
@@ -31,6 +34,7 @@ export function ReporteMapaScreen(props) {
         latitude: location.coords.latitude,
         longitude: location.coords.longitude,
       });
+      forceUpdate();
     })();
   }, []);
 
@@ -135,8 +139,14 @@ export function ReporteMapaScreen(props) {
 
   // Espera hasta que obtengamos las coordenadas iniciales
   if (!location) {
-    return <View />;
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#0000ff" />
+      </View>
+    );
   }
+
+
 
   return (
     <View style={styles.container}>
@@ -172,6 +182,8 @@ export function ReporteMapaScreen(props) {
           <ActivityIndicator size="large" color="#0000ff" />
         </View>
       )}
+
+
     </View>
   );
 }
