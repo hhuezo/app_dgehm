@@ -42,7 +42,7 @@ export function ReporteMapaScreen(props) {
     setMarkerLocation(e.nativeEvent.coordinate);
   };
 
-  const goToReporteFalla = async () => {
+  const handleReporteFalla = async () => {
     if (markerLocation) {
       try {
         setIsLoading(true);
@@ -93,7 +93,7 @@ export function ReporteMapaScreen(props) {
           distritoNombre = municipio;
 
       } else {
-        console.log("No se pudo obtener la información de ubicación.");
+        console.error("No se pudo obtener la información de ubicación.");
       }
     } catch (error) {
       console.log(
@@ -146,8 +146,6 @@ export function ReporteMapaScreen(props) {
     );
   }
 
-
-
   return (
     <View style={styles.container}>
       <Text style={styles.label}>Mueve el punto para cambiar la ubicación</Text>
@@ -175,7 +173,7 @@ export function ReporteMapaScreen(props) {
           </Marker>
         )}
       </MapView>
-      <Button title="Aceptar ubicación" onPress={goToReporteFalla} />
+      <Button title="Aceptar ubicación" onPress={handleReporteFalla} />
 
       {isLoading && (
         <View style={styles.loadingContainer}>
