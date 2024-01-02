@@ -1,6 +1,13 @@
-import React, { useState, useEffect,useReducer } from "react";
+import React, { useState, useEffect, useReducer } from "react";
 import MapView, { Marker, Callout } from "react-native-maps";
-import { StyleSheet, View, Button, Alert, Text,ActivityIndicator } from "react-native";
+import {
+  StyleSheet,
+  View,
+  Button,
+  Alert,
+  Text,
+  ActivityIndicator,
+} from "react-native";
 import * as Location from "expo-location";
 import { API_HOST } from "../../utils/constants";
 
@@ -12,10 +19,9 @@ export function ReporteMapaScreen(props) {
   let distritoId = "";
   let departamentoNombre = "";
   let distritoNombre = "";
-  const [isLoading, setIsLoading] = useState(false); 
+  const [isLoading, setIsLoading] = useState(false);
 
   const [, forceUpdate] = useReducer((x) => x + 1, 0); // Hook para forzar la actualización de la vista
-
 
   useEffect(() => {
     (async () => {
@@ -66,8 +72,7 @@ export function ReporteMapaScreen(props) {
         });
       } catch (error) {
         console.error("Error en la navegación:", error);
-      }
-      finally {
+      } finally {
         setIsLoading(false); // Ocultar imagen de carga
       }
     } else {
@@ -89,9 +94,8 @@ export function ReporteMapaScreen(props) {
           data.address.village ||
           data.address.county;
 
-          departamentoNombre = departamento;
-          distritoNombre = municipio;
-
+        departamentoNombre = departamento;
+        distritoNombre = municipio;
       } else {
         console.error("No se pudo obtener la información de ubicación.");
       }
@@ -137,6 +141,11 @@ export function ReporteMapaScreen(props) {
     }
   };
 
+  const handleMapPress = (e) => {
+    // Capturar el punto cuando se presiona en el mapa
+    setMarkerLocation(e.nativeEvent.coordinate);
+  };
+
   // Espera hasta que obtengamos las coordenadas iniciales
   if (!location) {
     return (
@@ -157,6 +166,7 @@ export function ReporteMapaScreen(props) {
           latitudeDelta: 0.0922,
           longitudeDelta: 0.0421,
         }}
+        onPress={handleMapPress}
       >
         {markerLocation && (
           <Marker
@@ -180,8 +190,6 @@ export function ReporteMapaScreen(props) {
           <ActivityIndicator size="large" color="#0000ff" />
         </View>
       )}
-
-
     </View>
   );
 }
@@ -200,13 +208,13 @@ const styles = StyleSheet.create({
     marginVertical: 10,
   },
   loadingContainer: {
-    position: 'absolute',
+    position: "absolute",
     top: 0,
     bottom: 0,
     left: 0,
     right: 0,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(255, 255, 255, 0.7)",
   },
 });
