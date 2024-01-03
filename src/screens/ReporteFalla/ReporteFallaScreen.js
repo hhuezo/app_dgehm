@@ -4,8 +4,8 @@ import {
   TouchableOpacity,
   TextInput,
   ScrollView,
-  Button,
   Image,
+  ActivityIndicator,
 } from "react-native";
 import React, { useState, useEffect } from "react";
 import { API_HOST } from "../../utils/constants";
@@ -24,8 +24,9 @@ import {
   AlertNotificationRoot,
 } from "react-native-alert-notification";
 
-export function ReporteFallaScreen(props) {
+import { AntDesign } from "@expo/vector-icons";
 
+export function ReporteFallaScreen(props) {
   const [departamentos, setDepartamentos] = useState([]);
   const [departamentoId, setDepartamentoId] = useState();
   const [distritos, setDistritos] = useState([]);
@@ -37,13 +38,13 @@ export function ReporteFallaScreen(props) {
   const [telefono, setTelefono] = useState();
   const [image, setImage] = useState(null);
 
-  const { latitude, longitude,idDepartamento,idDistrito } = props.route.params;
+  const [isLoading, setIsLoading] = useState(false);
+
+  const { latitude, longitude, idDepartamento, idDistrito } =
+    props.route.params;
   const { navigation } = props;
 
-
-
   useEffect(() => {
-
     setDepartamentoId(idDepartamento);
     setDistritoId(idDistrito);
 
@@ -135,6 +136,9 @@ export function ReporteFallaScreen(props) {
       });
       return;
     } else {
+      //loading para indicar el envio de la data
+      setIsLoading(true);
+
       // Datos a enviar en el cuerpo de la solicitud
       const data = {
         distrito_id: distritoId,
@@ -175,11 +179,9 @@ export function ReporteFallaScreen(props) {
           );
         }
 
-       
+        if (responseBody.value === "1") {
+          alert("Registro ingresado correctamente");
 
-       if (responseBody.value === "1") {
-        alert("Regitro ingresado correctamente");
-  
           //set a variables
           setDepartamentoId(null);
           setDistritoId(null);
@@ -192,8 +194,7 @@ export function ReporteFallaScreen(props) {
           navigation.navigate("ReporteFalla", { screen: "ReporteIndexStack" });
 
           //  return;
-        }
-        else{
+        } else {
           Dialog.show({
             type: ALERT_TYPE.DANGER,
             title: "Error",
@@ -211,6 +212,8 @@ export function ReporteFallaScreen(props) {
         });
         return;
         console.error("Error al realizar la solicitud:", error);
+      } finally {
+        setIsLoading(false); // Desactivar el indicador de carga después de que la solicitud se haya completado
       }
     }
   };
@@ -223,8 +226,6 @@ export function ReporteFallaScreen(props) {
         aspect: [4, 3],
         quality: 1,
       });
-
-      console.log("ImagePicker Result:", result);
 
       if (!result.canceled) {
         // Cargar el archivo desde la ruta (uri) y convertirlo a base64
@@ -240,7 +241,35 @@ export function ReporteFallaScreen(props) {
         setImage({ uri: result.assets[0].uri, base64 });
       }
     } catch (error) {
-      console.error("Error picking an image", error);
+      console.error("Error al seleccionar una imagen", error);
+    }
+  };
+
+  // Agrega una nueva función para manejar la toma de una foto
+  const tomarFoto = async () => {
+    try {
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: false,
+        aspect: [4, 3],
+        quality: 1,
+      });
+
+      if (!result.canceled) {
+        const { assets } = result;
+        const response = await fetch(assets[0].uri);
+        const blob = await response.blob();
+        const base64 = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result.split(",")[1]);
+          reader.onerror = (error) => reject(error);
+          reader.readAsDataURL(blob);
+        });
+
+        setImage({ uri: assets[0].uri, base64 });
+      }
+    } catch (error) {
+      console.error("Error al tomar una foto", error);
     }
   };
 
@@ -323,8 +352,6 @@ export function ReporteFallaScreen(props) {
           <Text style={styles.label}>DESCRIPCIÓN</Text>
           <TextInput
             style={styles.textInput}
-            multiline
-            numberOfLines={2}
             value={descripcion}
             onChangeText={setDescripcion}
           />
@@ -354,8 +381,28 @@ export function ReporteFallaScreen(props) {
         </View>
 
         <View style={styles.formControlNumber}>
-          <Text style={styles.label}>FOTOGRAFIA</Text>
-          <Button title="Seleccionar imagen" onPress={pickImage} />
+          <Text style={styles.label}>FOTOGRAFÍA</Text>
+
+          <View
+            style={{ flexDirection: "row", justifyContent: "space-between" }}
+          >
+            <TouchableOpacity
+              onPress={pickImage}
+              style={{ alignItems: "center" }}
+            >
+              <AntDesign name="paperclip" size={24} color="black" />
+              <Text>Adjuntar</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={tomarFoto}
+              style={{ alignItems: "center" }}
+            >
+              <AntDesign name="camerao" size={24} color="black" />
+              <Text>Tomar foto</Text>
+            </TouchableOpacity>
+          </View>
+
           <View style={styles.formControlImage}>
             {image && (
               <Image
@@ -365,6 +412,7 @@ export function ReporteFallaScreen(props) {
             )}
           </View>
         </View>
+
         <TouchableOpacity
           style={{
             height: 50,
@@ -377,6 +425,10 @@ export function ReporteFallaScreen(props) {
         >
           <Text style={{ color: "white", fontSize: 18 }}>Enviar</Text>
         </TouchableOpacity>
+
+        <View style={styles.formControlImage}>
+          {isLoading && <ActivityIndicator size="large" color="#0F172A" />}
+        </View>
       </View>
       <AlertNotificationRoot></AlertNotificationRoot>
     </ScrollView>
