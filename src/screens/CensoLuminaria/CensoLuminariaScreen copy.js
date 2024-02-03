@@ -21,11 +21,9 @@ import {
   Toast,
 } from "react-native-alert-notification";
 
-export function CensoLuminariaScreen(props) {
-  const { latitude, longitude, idDepartamento, idDistrito, Direccion } =
-    props.route.params;
-  const { navigation } = props;
+import * as Location from "expo-location";
 
+export function CensoLuminariaScreen(props) {
   const [departamentos, setDepartamentos] = useState([]);
   const [departamentoId, setDepartamentoId] = useState();
   const [distritos, setDistritos] = useState([]);
@@ -33,14 +31,18 @@ export function CensoLuminariaScreen(props) {
   const [tipoLuminaria, setTipoLuminaria] = useState([]);
   const [tipoLuminariaId, setTipoLuminariaId] = useState();
 
+  const [codigo, setCodigo] = useState("");
   const [potenciaPromedio, setPotenciaPromedio] = useState([]);
   const [potenciaPromedioId, setPotenciaPromedioId] = useState("");
 
   const [consumoPromedio, setConsumoPromedio] = useState("");
   const [potenciaNominal, setPotenciaNominal] = useState("");
   const [isEditable, setIsEditable] = useState(false);
-  const [direccion, setDireccion] = useState("");
   const [dencidad, setDencidad] = useState("");
+
+  //localización
+  const [location, setLocation] = useState(null);
+  const [errorMsg, setErrorMsg] = useState(null);
 
   //para manejo de datepicker
   const [dateFecha, setDateFecha] = useState(new Date());
@@ -59,52 +61,54 @@ export function CensoLuminariaScreen(props) {
   };
 
   useEffect(() => {
+    const fetchData = async () => {
+      try {
+        //console.log("hola");
+        const response = await fetch(`${API_HOST}/api_censo_luminaria/create`);
+        const result = await response.json();
+
+        const DepartamentoArray = [];
+        for await (const departamento of result.departamentos) {
+          DepartamentoArray.push({
+            value: departamento.id,
+            label: departamento.nombre,
+          });
+        }
+
+        //console.log(DepartamentoArray);
+        setDepartamentos(DepartamentoArray);
+
+        const TipoLuminariaArray = [];
+        for await (const tipo of result.tipos) {
+          TipoLuminariaArray.push({
+            value: tipo.id,
+            label: tipo.nombre,
+          });
+        }
+        setTipoLuminaria(TipoLuminariaArray);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+
+    const getLocation = async () => {
+      try {
+        let { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== "granted") {
+          setErrorMsg("Permission to access location was denied");
+          return;
+        }
+
+        let location = await Location.getCurrentPositionAsync({});
+        setLocation(location);
+      } catch (error) {
+        console.error("Error getting location:", error);
+      }
+    };
+
     fetchData();
+    getLocation();
   }, []);
-
-  const fetchData = async () => {
-    try {
-      setDepartamentoId(idDepartamento);
-      if (idDistrito) {
-        setDistritoId(idDistrito);
-      }
-      setDireccion(Direccion);
-
-      const response = await fetch(
-        `${API_HOST}/api_censo_luminaria/get_data_create/${idDepartamento}`
-      );
-      const result = await response.json();
-
-      const DepartamentoArray = [];
-      for await (const departamento of result.departamentos) {
-        DepartamentoArray.push({
-          value: departamento.id,
-          label: departamento.nombre,
-        });
-      }
-      setDepartamentos(DepartamentoArray);
-
-      const DistritoArray = [];
-      for await (const distrito of result.distritos) {
-        DistritoArray.push({
-          value: distrito.id,
-          label: distrito.nombre,
-        });
-      }
-      setDistritos(DistritoArray);
-
-      const tipoLuminariaArray = [];
-      for await (const tipo of result.tipos) {
-        tipoLuminariaArray.push({
-          value: tipo.id,
-          label: tipo.nombre,
-        });
-      }
-      setTipoLuminaria(tipoLuminariaArray);
-    } catch (error) {
-      console.error("Error fetching data:", error);
-    }
-  };
 
   const fetchDataDistritos = async (value) => {
     //console.log(value);
@@ -137,7 +141,6 @@ export function CensoLuminariaScreen(props) {
 
   const fetchPotenciaPromedio = async (value) => {
     try {
-      console.log(value);
       setTipoLuminariaId(value);
       setPotenciaPromedioId("");
       setPotenciaPromedio([]);
@@ -208,9 +211,10 @@ export function CensoLuminariaScreen(props) {
     if (
       !distritoId ||
       !tipoLuminariaId ||
+      !dencidad ||
       !dateFecha ||
-      !latitude ||
-      !longitude
+      !location ||
+      !codigo
     ) {
       Dialog.show({
         type: ALERT_TYPE.DANGER,
@@ -237,8 +241,17 @@ export function CensoLuminariaScreen(props) {
       return;
     }
     //9999
-   else {
-      console.log("aaa");
+   else if (dencidad > 9999.0) {
+    Dialog.show({
+      type: ALERT_TYPE.DANGER,
+      title: "Error",
+      textBody: "La dencidad luminicia esta fuera de rango, la deciada debe ser menor a 10,000.0",
+      button: "Cerrar",
+    });
+    return;
+  }
+    else {
+      //console.log("aaa");
 
       const formattedDate = `${dateFecha.getFullYear()}-${padZero(
         dateFecha.getMonth() + 1
@@ -255,75 +268,78 @@ export function CensoLuminariaScreen(props) {
         distrito_id: distritoId,
         tipo_luminaria_id: tipoLuminariaId,
         potencia_nominal: potenciaNominal,
-        latitud: latitude,
-        longitud: longitude,
+        latitud: location.coords.latitude,
+        longitud: location.coords.longitude,
         consumo_mensual: consumoPromedio,
         fecha_ultimo_censo: formattedDate,
-        //codigo_luminaria: codigo,
-        direccion: direccion,
+        codigo_luminaria: codigo,
+        dencidad_luminicia: dencidad_decimal,
       };
 
-      // URL de la API
-      const apiUrl = `${API_HOST}/api_censo_luminaria`;
-      console.log(data);
-      // Configuración de la solicitud
-      const requestOptions = {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data), // Convierte los datos a formato JSON
-      };
+       // URL de la API
+       const apiUrl = `${API_HOST}/api_censo_luminaria`;
+       console.log(data);
+       // Configuración de la solicitud
+       const requestOptions = {
+         method: "POST",
+         headers: {
+           "Content-Type": "application/json",
+         },
+         body: JSON.stringify(data), // Convierte los datos a formato JSON
+         
+       };
+ 
+       try {
+         response = await fetch(apiUrl, requestOptions);
+ 
+         const responseBody = await response.json(); // Lee el cuerpo de la respuesta una vez
+ 
+         console.log("Body:", responseBody);
+ 
+         // Manejar la respuesta del servidor
+         if (!response.ok) {
+           throw new Error(
+             `Error al realizar la solicitud: ${response.status} - ${response.statusText}`
+           );
+         }
+ 
+         //alert(responseBody.mensaje);
+ 
+         if (responseBody.value === 1) {
+           Dialog.show({
+             type: ALERT_TYPE.SUCCESS,
+             title: "Ok",
+             textBody: "Regitro ingresado correctamente",
+             button: "Cerrar",
+           }); 
 
-      try {
-        response = await fetch(apiUrl, requestOptions);
+            // Restablecer variables a su estado original
+            //setDepartamentoId(null);
+            //setDistritoId(null);
+            setTipoLuminariaId(null);
+            setCodigo("");
+            setPotenciaPromedio([]);
+            setPotenciaPromedioId("");
+            setConsumoPromedio("");
+            setPotenciaNominal("");
+            setIsEditable(false);
+            setDencidad("");
+            setDateFecha(new Date());
 
-        const responseBody = await response.json(); // Lee el cuerpo de la respuesta una vez
-
-        console.log("Body:", responseBody);
-
-        // Manejar la respuesta del servidor
-        if (!response.ok) {
-          throw new Error(
-            `Error al realizar la solicitud: ${response.status} - ${response.statusText}`
-          );
-        }
-
-        console.log(responseBody);
-
-        if (responseBody.value === 1) {
-          Dialog.show({
-            type: ALERT_TYPE.SUCCESS,
-            title: "Ok",
-            textBody: "Regitro ingresado correctamente",
-            button: "Cerrar",
-          });
-
-          // Restablecer variables a su estado original
-          //setDepartamentoId(null);
-          //setDistritoId(null);
-          setTipoLuminariaId(null);
-          //setCodigo("");
-          setPotenciaPromedio([]);
-          //setPotenciaPromedioId("");
-          setConsumoPromedio("");
-          setPotenciaNominal("");
-          setIsEditable(false);
-          setDencidad("");
-          setDateFecha(new Date());
-
-          return;
-        }
-      } catch (error) {
-        Dialog.show({
-          type: ALERT_TYPE.DANGER,
-          title: "Error",
-          textBody: "Error al realizar la solicitud",
-          button: "Cerrar",
-        });
-        return;
-        console.error("Error al realizar la solicitud:", error);
-      }
+           return;
+ 
+ 
+         }
+       } catch (error) {
+         Dialog.show({
+           type: ALERT_TYPE.DANGER,
+           title: "Error",
+           textBody: "Error al realizar la solicitud",
+           button: "Cerrar",
+         });
+         return;
+         console.error("Error al realizar la solicitud:", error);
+       }
     }
   };
 
@@ -331,6 +347,7 @@ export function CensoLuminariaScreen(props) {
     <ScrollView>
       <View style={styles.container}>
         <Text style={styles.label}>DEPARTAMENTO</Text>
+
         <View style={styles.formControl}>
           {departamentos && (
             <RNPickerSelect
@@ -346,7 +363,7 @@ export function CensoLuminariaScreen(props) {
               }}
               value={departamentoId}
               placeholder={{
-                label: "Selecciona un departamento",
+                label: "Selecciona un tipo",
                 value: null,
               }}
             />
@@ -377,17 +394,6 @@ export function CensoLuminariaScreen(props) {
               }}
             />
           )}
-        </View>
-
-        <View style={styles.formControlNumber}>
-          <Text style={styles.label}>DIRECCIÓN</Text>
-          <TextInput
-            style={styles.textInput}
-            value={direccion}
-            onChangeText={setDireccion}
-            multiline
-            numberOfLines={3}
-          />
         </View>
 
         <Text style={styles.label}>TIPO LUMINARIA</Text>
@@ -436,6 +442,7 @@ export function CensoLuminariaScreen(props) {
           )}
         </View>
 
+
         <View style={styles.formControlNumber}>
           <Text style={styles.label}>CONSUMO MENSUAL</Text>
           <TextInput
@@ -446,12 +453,33 @@ export function CensoLuminariaScreen(props) {
         </View>
 
         <View style={styles.formControlNumber}>
+          <Text style={styles.label}>CODIGO LUMINARIA</Text>
+          <TextInput
+            style={styles.textInput}
+            value={codigo}
+            onChangeText={setCodigo}
+            keyboardType="numeric"
+          />
+        </View>
+
+
+        <View style={styles.formControlNumber}>
           <Text style={styles.label}>POTENCIA NOMINAL</Text>
           <TextInput
             style={styles.textInput}
             value={potenciaNominal}
             onChangeText={setPotenciaNominal}
             editable={isEditable}
+            keyboardType="numeric"
+          />
+        </View>
+
+        <View style={styles.formControlNumber}>
+          <Text style={styles.label}>DENCIDAD LUMINICIA</Text>
+          <TextInput
+            style={styles.textInput}
+            value={dencidad}
+            onChangeText={setDencidad}
             keyboardType="numeric"
           />
         </View>
