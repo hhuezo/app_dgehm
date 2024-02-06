@@ -201,6 +201,17 @@ export function CensoLuminariaScreen(props) {
     }
   };
 
+  const calculoPotencia = () => {
+    if (potenciaNominal !== "" && parseFloat(potenciaNominal) > 0) {
+      let consumo_mensual = (parseFloat(potenciaNominal) * 360) / 1000;
+      console.log('El usuario abandonó el campo de entrada', consumo_mensual);
+      setConsumoPromedio(consumo_mensual.toString()); // Convertir a cadena
+    } else {
+      setConsumoPromedio("");
+    }
+  };
+  
+
   const handSendData = async (value) => {
     // Validar que los campos obligatorios no sean nulos
 
@@ -437,6 +448,18 @@ export function CensoLuminariaScreen(props) {
         </View>
 
         <View style={styles.formControlNumber}>
+          <Text style={styles.label}>POTENCIA NOMINAL</Text>
+          <TextInput
+            style={styles.textInput}
+            value={potenciaNominal}
+            onChangeText={setPotenciaNominal}
+            editable={isEditable}
+            keyboardType="numeric"
+            onBlur={calculoPotencia}
+          />
+        </View>
+
+        <View style={styles.formControlNumber}>
           <Text style={styles.label}>CONSUMO MENSUAL</Text>
           <TextInput
             style={styles.textInput}
@@ -445,16 +468,7 @@ export function CensoLuminariaScreen(props) {
           />
         </View>
 
-        <View style={styles.formControlNumber}>
-          <Text style={styles.label}>POTENCIA NOMINAL</Text>
-          <TextInput
-            style={styles.textInput}
-            value={potenciaNominal}
-            onChangeText={setPotenciaNominal}
-            editable={isEditable}
-            keyboardType="numeric"
-          />
-        </View>
+     
 
         <Text style={styles.label}>FECHA ULTIMO CENSO</Text>
         <View style={styles.inputDate}>
