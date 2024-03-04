@@ -17,7 +17,8 @@ export function CensoLuminariaIndexScreen(props) {
   
   return (
     <View>
-      {!userName ? (
+      
+  {/*{!userName ? (
         <Card>
           <View style={{ alignItems: "center" }}>
             <Image
@@ -55,7 +56,7 @@ export function CensoLuminariaIndexScreen(props) {
             </Text>
           </TouchableOpacity>
         </Card>
-      ) : (
+          ) : ( )}*/}
         <View>
           <TouchableOpacity onPress={goToMapa}>
             <Card style={{ alignItems: "center" }}>
@@ -99,7 +100,7 @@ export function CensoLuminariaIndexScreen(props) {
             </View>
           </Card>
         </View>
-      )}
+     
     </View>
   );
 }

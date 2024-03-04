@@ -65,6 +65,7 @@ export function CensoLuminariaMapaScreen(props) {
           getDistrito(distritoNombre),
         ]);
 
+
         navigation.navigate("CensoLuminariaStack", {
           latitude: markerLocation.latitude,
           longitude: markerLocation.longitude,
@@ -88,7 +89,7 @@ export function CensoLuminariaMapaScreen(props) {
 
       const response = await fetch(url);
       const data = await response.json();
-      console.log(data);
+      //console.log("ubicacion: ", data);
       if (data.address) {
         const departamento = data.address.state;
         const municipio =
@@ -100,8 +101,7 @@ export function CensoLuminariaMapaScreen(props) {
         departamentoNombre = departamento;
         distritoNombre = municipio;
         direccion = data.display_name;
-      
-    
+        
       } else {
         console.error("No se pudo obtener la información de ubicación.");
       }
@@ -117,7 +117,6 @@ export function CensoLuminariaMapaScreen(props) {
     try {
       const baseUrl = `${API_HOST}/api_get_departamento_id`;
       const urlCompleta = `${baseUrl}/${nombre}`;
-      console.log(urlCompleta);
       const response = await fetch(urlCompleta);
       const data = await response.json();
       departamentoId = data.departamentoId;
@@ -132,13 +131,18 @@ export function CensoLuminariaMapaScreen(props) {
 
   const getDistrito = async (nombre) => {
     try {
-      const baseUrl = `${API_HOST}/api_get_distrito_id`;
-      const urlCompleta = `${baseUrl}/${nombre}`;
-      console.log(urlCompleta);
-      const response = await fetch(urlCompleta);
-      const data = await response.json();
-      distritoId = data.distritoId;
-      console.log("distrito: ", distritoId);
+      if(nombre === undefined)
+      {
+        distritoId = 0;
+      }
+      else{
+        const baseUrl = `${API_HOST}/api_get_distrito_id`;
+        const urlCompleta = `${baseUrl}/${nombre}`;
+        const response = await fetch(urlCompleta);
+        const data = await response.json();
+        distritoId = data.distritoId;
+      }      
+
     } catch (error) {
       console.log(
         "Error al obtener la información del departamento:",

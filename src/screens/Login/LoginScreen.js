@@ -26,8 +26,8 @@ export function LoginScreen(props) {
   const { navigation } = props;
   const { userId, userName, userEmail } = useSession();
 
-  const [email, setEmail] = useState();
-  const [password, setPassword] = useState();
+  const [email, setEmail] = useState("admin@mail.com");
+  const [password, setPassword] = useState("12345678");
 
   const { setUserId, setUserName, setUserEmail } = useSession();
 

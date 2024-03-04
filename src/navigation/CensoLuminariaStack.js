@@ -2,6 +2,7 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { CensoLuminariaIndexScreen } from "../screens/CensoLuminaria/CensoLuminariaIndexScreen";
 import { CensoLuminariaScreen } from "../screens/CensoLuminaria/CensoLuminariaScreen";
 import { CensoLuminariaMapaScreen } from "../screens/CensoLuminaria/CensoLuminariaMapaScreen";
+import { CensoLuminariaCodigoQr } from "../screens/CensoLuminaria/CensoLuminariaCodigoQr";
 import React from "react";
 
 const Stack = createNativeStackNavigator();
@@ -23,6 +24,12 @@ export function CensoLuminariaStack() {
         name="CensoLuminariaStack"
         component={CensoLuminariaScreen}
         options={{ title: "Censo de luminaria" }}
+      />
+
+<Stack.Screen
+        name="CensoLuminariaCodigoQrStack"
+        component={CensoLuminariaCodigoQr}
+        options={{ title: "Datos luminaria" }}
       />
     </Stack.Navigator>
   );

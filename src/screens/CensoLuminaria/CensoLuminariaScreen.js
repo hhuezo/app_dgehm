@@ -4,7 +4,7 @@ import {
   TouchableOpacity,
   TextInput,
   ScrollView,
-  Button,
+  Switch,
 } from "react-native";
 import React, { useState, useEffect } from "react";
 
@@ -13,7 +13,6 @@ import { styles } from "./CensoLuminariaStyles";
 import { dropStyles } from "./CensoLuminariaStyles";
 import { Dropdown } from "react-native-element-dropdown";
 import RNPickerSelect from "react-native-picker-select";
-import DateTimePicker from "@react-native-community/datetimepicker";
 import {
   ALERT_TYPE,
   Dialog,
@@ -21,15 +20,21 @@ import {
   Toast,
 } from "react-native-alert-notification";
 
+import { useSession } from "../../utils/SessionContext";
+
 export function CensoLuminariaScreen(props) {
-  const { latitude, longitude, idDepartamento, idDistrito, Direccion } =
-    props.route.params;
+  const { latitude, longitude, idDepartamento, idDistrito, Direccion } =    props.route.params;
   const { navigation } = props;
+
+  const { userId, userName, userEmail } = useSession();
 
   const [departamentos, setDepartamentos] = useState([]);
   const [departamentoId, setDepartamentoId] = useState();
   const [distritos, setDistritos] = useState([]);
   const [distritoId, setDistritoId] = useState();
+  const [municipios, setMunicipios] = useState([]);
+  const [municipioId, setMunicipioId] = useState();
+
   const [tipoLuminaria, setTipoLuminaria] = useState([]);
   const [tipoLuminariaId, setTipoLuminariaId] = useState();
 
@@ -40,22 +45,15 @@ export function CensoLuminariaScreen(props) {
   const [potenciaNominal, setPotenciaNominal] = useState("");
   const [isEditable, setIsEditable] = useState(false);
   const [direccion, setDireccion] = useState("");
-  const [dencidad, setDencidad] = useState("");
 
-  //para manejo de datepicker
-  const [dateFecha, setDateFecha] = useState(new Date());
-  const [show, setShow] = useState(false);
+  const [condicionLampara, setCondicionLampara] = useState(false);
+  const [tiposFalla, setTiposFalla] = useState([]);
+  const [tiposFallaId, setTiposFallaId] = useState();
+  const [observacion, setObservacion] = useState();
 
-  const onChange = (event, selectedDate) => {
-    const currentDate = selectedDate || dateFecha;
-    setShow(Platform.OS === "ios");
-
-    setDateFecha(currentDate);
-    //console.log(currentDate);
-  };
-
-  const showMode = () => {
-    setShow(true);
+  const toggleSwitch = () => {
+    setCondicionLampara((previousState) => !previousState);
+    setTiposFallaId(""); // Esto reseteará `tiposFallaId` a una cadena vacía cada vez que se llame a toggleSwitch
   };
 
   useEffect(() => {
@@ -67,11 +65,19 @@ export function CensoLuminariaScreen(props) {
       setDepartamentoId(idDepartamento);
       if (idDistrito) {
         setDistritoId(idDistrito);
+
+        const response = await fetch(
+          `${API_HOST}/api_get_municipio_id/${idDistrito}`
+        );
+        const result = await response.json();
+        if (result) {
+          setMunicipioId(result.municipioId);
+        }
       }
       setDireccion(Direccion);
 
       const response = await fetch(
-        `${API_HOST}/api_censo_luminaria/get_data_create/${idDepartamento}`
+        `${API_HOST}/api_censo_luminaria/get_data_create/${idDepartamento}/${idDistrito}`
       );
       const result = await response.json();
 
@@ -83,6 +89,15 @@ export function CensoLuminariaScreen(props) {
         });
       }
       setDepartamentos(DepartamentoArray);
+
+      const MunicipioArray = [];
+      for await (const municipio of result.municipios) {
+        MunicipioArray.push({
+          value: municipio.id,
+          label: municipio.nombre,
+        });
+      }
+      setMunicipios(MunicipioArray);
 
       const DistritoArray = [];
       for await (const distrito of result.distritos) {
@@ -101,6 +116,45 @@ export function CensoLuminariaScreen(props) {
         });
       }
       setTipoLuminaria(tipoLuminariaArray);
+
+      const tipoFallaArray = [];
+      for await (const tipo of result.tipos_falla) {
+        tipoFallaArray.push({
+          value: tipo.id,
+          label: tipo.nombre,
+        });
+      }
+      setTiposFalla(tipoFallaArray);
+      console.log("tipos falla",tipoFallaArray);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    }
+  };
+
+  const fetchDataMunicipios = async (value) => {
+    //console.log(value);
+    try {
+      const url = `${API_HOST}/api_get_municipios/${value}`;
+      const response = await fetch(url);
+
+      if (!response.ok) {
+        throw new Error(
+          `Error en la solicitud. Código de estado: ${response.status}`
+        );
+      }
+
+      const data = await response.json();
+
+      const municipiosArray = [];
+      for await (const municipio of data.municipios) {
+        municipiosArray.push({
+          value: municipio.id,
+          label: municipio.nombre,
+        });
+      }
+
+      setMunicipios(municipiosArray);
+      //console.log(distritosArray);
     } catch (error) {
       console.error("Error fetching data:", error);
     }
@@ -151,7 +205,7 @@ export function CensoLuminariaScreen(props) {
       }
 
       const data = await response.json();
-      console.log(data);
+      console.log("dattaa:  ", data);
       if (data && data.value === 1) {
         const potenciasArray = [];
         for await (const potencia of data.potencia_promedio) {
@@ -162,9 +216,13 @@ export function CensoLuminariaScreen(props) {
         }
         setPotenciaPromedio(potenciasArray);
         setIsEditable(false);
+        //setPotenciaPromedioShow();
+        console.log("show 1");
       } else {
         setPotenciaPromedio([]);
         setIsEditable(true);
+        console.log("show 2");
+        //setPotenciaPromedioShow(false);
       }
       setConsumoPromedio("");
 
@@ -204,25 +262,26 @@ export function CensoLuminariaScreen(props) {
   const calculoPotencia = () => {
     if (potenciaNominal !== "" && parseFloat(potenciaNominal) > 0) {
       let consumo_mensual = (parseFloat(potenciaNominal) * 360) / 1000;
-      console.log('El usuario abandonó el campo de entrada', consumo_mensual);
+      //console.log("El usuario abandonó el campo de entrada", consumo_mensual);
       setConsumoPromedio(consumo_mensual.toString()); // Convertir a cadena
     } else {
       setConsumoPromedio("");
     }
   };
-  
 
   const handSendData = async (value) => {
+    if (!latitude || !longitude)
+    {
+      Dialog.show({
+        type: ALERT_TYPE.DANGER,
+        title: "Error",
+        textBody: "Las coordenadas ya han sido registradas o no son accesibles",
+        button: "Cerrar",
+      });
+      return;
+    }
     // Validar que los campos obligatorios no sean nulos
-
-    console.log(potenciaPromedioId, isEditable);
-    if (
-      !distritoId ||
-      !tipoLuminariaId ||
-      !dateFecha ||
-      !latitude ||
-      !longitude
-    ) {
+    if (!distritoId || !tipoLuminariaId) {
       Dialog.show({
         type: ALERT_TYPE.DANGER,
         title: "Error",
@@ -246,33 +305,35 @@ export function CensoLuminariaScreen(props) {
         button: "Cerrar",
       });
       return;
+    } else if (condicionLampara == false && !tiposFallaId) {
+      Dialog.show({
+        type: ALERT_TYPE.DANGER,
+        title: "Error",
+        textBody: "Por favor, seleccionar el tipo de falla.",
+        button: "Cerrar",
+      });
+      return;
     }
     //9999
-   else {
-      console.log("aaa");
-
-      const formattedDate = `${dateFecha.getFullYear()}-${padZero(
-        dateFecha.getMonth() + 1
-      )}-${padZero(dateFecha.getDate())}`;
-
-      function padZero(value) {
-        return value < 10 ? `0${value}` : `${value}`;
-      }
-
+    else {
+  
       // Datos a enviar en el cuerpo de la solicitud
-
-      var dencidad_decimal = parseFloat(dencidad);
       const data = {
-        distrito_id: distritoId,
-        tipo_luminaria_id: tipoLuminariaId,
-        potencia_nominal: potenciaNominal,
+        usuario: userId,
         latitud: latitude,
         longitud: longitude,
-        consumo_mensual: consumoPromedio,
-        fecha_ultimo_censo: formattedDate,
-        //codigo_luminaria: codigo,
+        distrito_id: distritoId,
         direccion: direccion,
+        tipo_luminaria_id: tipoLuminariaId,
+        potencia_nominal: potenciaNominal,
+        potencia_promedio :potenciaPromedioId,
+        consumo_mensual: consumoPromedio,
+        condicion_lampara: condicionLampara,
+        tipo_falla: tiposFallaId,
+        observacion: observacion,   
       };
+
+      
 
       // URL de la API
       const apiUrl = `${API_HOST}/api_censo_luminaria`;
@@ -293,6 +354,7 @@ export function CensoLuminariaScreen(props) {
 
         console.log("Body:", responseBody);
 
+        
         // Manejar la respuesta del servidor
         if (!response.ok) {
           throw new Error(
@@ -303,33 +365,29 @@ export function CensoLuminariaScreen(props) {
         console.log(responseBody);
 
         if (responseBody.value === 1) {
-          Dialog.show({
-            type: ALERT_TYPE.SUCCESS,
-            title: "Ok",
-            textBody: "Regitro ingresado correctamente",
-            button: "Cerrar",
-          });
+         
 
           // Restablecer variables a su estado original
-          //setDepartamentoId(null);
-          //setDistritoId(null);
           setTipoLuminariaId(null);
-          //setCodigo("");
           setPotenciaPromedio([]);
-          //setPotenciaPromedioId("");
           setConsumoPromedio("");
           setPotenciaNominal("");
           setIsEditable(false);
-          setDencidad("");
-          setDateFecha(new Date());
+          setObservacion("");
+          setCondicionLampara(false);
+        
 
-          return;
+
+          navigation.navigate("CensoLuminariaCodigoQrStack", {
+            codigo: responseBody.codigo
+          });
+
         }
       } catch (error) {
         Dialog.show({
           type: ALERT_TYPE.DANGER,
           title: "Error",
-          textBody: "Error al realizar la solicitud",
+          textBody: "Error al realizar la solicitud..",
           button: "Cerrar",
         });
         return;
@@ -352,13 +410,40 @@ export function CensoLuminariaScreen(props) {
               onValueChange={(value) => {
                 if (value !== departamentoId) {
                   setDepartamentoId(value);
-                  fetchDataDistritos(value);
+                  fetchDataMunicipios(value);
                 }
               }}
               value={departamentoId}
               placeholder={{
                 label: "Selecciona un departamento",
                 value: null,
+              }}
+            />
+          )}
+        </View>
+
+        <Text style={styles.label}>MUNICIPIO</Text>
+        <View style={styles.formControl}>
+          {municipios && (
+            <Dropdown
+              style={dropStyles.dropdown}
+              placeholderStyle={dropStyles.placeholderStyle}
+              selectedTextStyle={dropStyles.selectedTextStyle}
+              inputSearchStyle={dropStyles.inputSearchStyle}
+              iconStyle={dropStyles.iconStyle}
+              data={municipios}
+              search
+              maxHeight={300}
+              labelField="label"
+              valueField="value"
+              placeholder="SELECCIONAR"
+              searchPlaceholder="BUSCAR..."
+              value={municipioId}
+              onChange={(item) => {
+                if (item.value !== municipioId) {
+                  setMunicipioId(item.value);
+                  fetchDataDistritos(item.value);
+                }
               }}
             />
           )}
@@ -424,43 +509,49 @@ export function CensoLuminariaScreen(props) {
           )}
         </View>
 
-        <Text style={styles.label}>POTENCIA PROMEDIO</Text>
+        {isEditable == false && (
+          <View>
+            <Text style={styles.label}>POTENCIA PROMEDIO(Voltio)</Text>
 
-        <View style={styles.formControl}>
-          {potenciaPromedio && (
-            <RNPickerSelect
-              items={potenciaPromedio.map((potencia) => ({
-                label: potencia.label,
-                value: potencia.value,
-              }))}
-              onValueChange={(value) => {
-                if (value !== potenciaPromedioId) {
-                  fetchConsumoMensual(value);
-                }
-              }}
-              value={potenciaPromedioId}
-              placeholder={{
-                label: "Selecciona un tipo",
-                value: null,
-              }}
+            <View style={styles.formControl}>
+              {potenciaPromedio && (
+                <RNPickerSelect
+                  items={potenciaPromedio.map((potencia) => ({
+                    label: potencia.label,
+                    value: potencia.value,
+                  }))}
+                  onValueChange={(value) => {
+                    if (value !== potenciaPromedioId) {
+                      fetchConsumoMensual(value);
+                    }
+                  }}
+                  value={potenciaPromedioId}
+                  placeholder={{
+                    label: "Selecciona un tipo",
+                    value: null,
+                  }}
+                />
+              )}
+            </View>
+          </View>
+        )}
+
+        {isEditable == true && (
+          <View style={styles.formControlNumber}>
+            <Text style={styles.label}>POTENCIA NOMINAL (Vatio)</Text>
+            <TextInput
+              style={styles.textInput}
+              value={potenciaNominal}
+              onChangeText={setPotenciaNominal}
+              editable={isEditable}
+              keyboardType="numeric"
+              onBlur={calculoPotencia}
             />
-          )}
-        </View>
+          </View>
+        )}
 
         <View style={styles.formControlNumber}>
-          <Text style={styles.label}>POTENCIA NOMINAL</Text>
-          <TextInput
-            style={styles.textInput}
-            value={potenciaNominal}
-            onChangeText={setPotenciaNominal}
-            editable={isEditable}
-            keyboardType="numeric"
-            onBlur={calculoPotencia}
-          />
-        </View>
-
-        <View style={styles.formControlNumber}>
-          <Text style={styles.label}>CONSUMO MENSUAL</Text>
+          <Text style={styles.label}>CONSUMO MENSUAL (Kwh)</Text>
           <TextInput
             style={styles.textInput}
             value={consumoPromedio}
@@ -468,27 +559,70 @@ export function CensoLuminariaScreen(props) {
           />
         </View>
 
-     
-
-        <Text style={styles.label}>FECHA ULTIMO CENSO</Text>
-        <View style={styles.inputDate}>
-          <TouchableOpacity onPress={showMode}>
-            <TextInput
-              style={styles.inputDate}
-              editable={false}
-              value={"   " + dateFecha.toLocaleDateString()}
+        <View style={{ flex: 1, justifyContent: "flex-start", paddingTop: 5 }}>
+          <Text style={styles.label}>
+            ¿ESTÁ LA LÁMPARA EN BUENAS CONDICIONES?
+          </Text>
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              paddingLeft: 20,
+              paddingTop: 10,
+            }}
+          >
+            <Switch
+              trackColor={{ false: "#767577", true: "#81b0ff" }}
+              thumbColor={condicionLampara ? "#f5dd4b" : "#f4f3f4"}
+              ios_backgroundColor="#3e3e3e"
+              onValueChange={toggleSwitch}
+              value={condicionLampara}
+              style={{ transform: [{ scaleX: 1.5 }, { scaleY: 1.5 }] }} // Ajusta estos valores según necesites
             />
-          </TouchableOpacity>
+            <Text style={{ marginLeft: 10, fontSize: 18 }}>
+              {" "}
+              {condicionLampara ? "Si" : "No"}
+            </Text>
+          </View>
         </View>
-        {show && (
-          <DateTimePicker
-            testID="dateTimePicker"
-            value={dateFecha}
-            mode={"date"}
-            display="default"
-            onChange={onChange}
-          />
+
+        {condicionLampara == false && (
+          <View>
+            <Text style={styles.label}>TIPO FALLA</Text>
+
+            <View style={styles.formControl}>
+              {tipoLuminaria && (
+                <RNPickerSelect
+                  items={tiposFalla.map((tipo) => ({
+                    label: tipo.label,
+                    value: tipo.value,
+                  }))}
+                  onValueChange={(value) => {
+                    if (value !== tiposFallaId && value !== "") {
+                      setTiposFallaId(value);
+                    }
+                  }}
+                  value={tiposFallaId}
+                  placeholder={{
+                    label: "Selecciona un tipo",
+                    value: null,
+                  }}
+                />
+              )}
+            </View>
+          </View>
         )}
+
+        <View style={styles.formControlNumber}>
+          <Text style={styles.label}>OBSERVACIÓN</Text>
+          <TextInput
+            style={styles.textInput}
+            value={observacion}
+            onChangeText={setObservacion}
+            multiline
+            numberOfLines={3}
+          />
+        </View>
 
         <TouchableOpacity
           style={{
@@ -497,6 +631,7 @@ export function CensoLuminariaScreen(props) {
             justifyContent: "center",
             alignItems: "center",
             borderRadius: 8,
+            marginTop: 10,
           }}
           onPress={handSendData}
         >
