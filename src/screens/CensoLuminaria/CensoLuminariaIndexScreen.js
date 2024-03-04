@@ -14,11 +14,10 @@ export function CensoLuminariaIndexScreen(props) {
   const handInicioSesion = () => {
     navigation.navigate("Login");
   };
-  
+
   return (
     <View>
-      
-  {/*{!userName ? (
+      {!userName ? (
         <Card>
           <View style={{ alignItems: "center" }}>
             <Image
@@ -50,13 +49,12 @@ export function CensoLuminariaIndexScreen(props) {
             }}
             onPress={handInicioSesion}
           >
-    
             <Text style={{ color: "white", fontSize: 23, marginLeft: 10 }}>
               Iniciar sesión
             </Text>
           </TouchableOpacity>
         </Card>
-          ) : ( )}*/}
+      ) : (
         <View>
           <TouchableOpacity onPress={goToMapa}>
             <Card style={{ alignItems: "center" }}>
@@ -100,7 +98,7 @@ export function CensoLuminariaIndexScreen(props) {
             </View>
           </Card>
         </View>
-     
+      )}
     </View>
   );
 }

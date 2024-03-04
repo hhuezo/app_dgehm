@@ -98,14 +98,7 @@ export function LoginScreen(props) {
           button: "Cerrar",
         });
       } else {
-        Dialog.show({
-          type: ALERT_TYPE.DANGER,
-          title: "error",
-          textBody: "Credenciales incorrectas",
-          button: "Cerrar",
-        });
-
-        return;
+        navigation.navigate("CensoLuminariaIndex");
       }
     } catch (error) {
       console.error("Error al realizar la solicitud:", error);
