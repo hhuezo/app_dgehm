@@ -19,11 +19,18 @@ import {
   AlertNotificationRoot,
   Toast,
 } from "react-native-alert-notification";
+import {  Icon } from "react-native-elements";
 
 import { useSession } from "../../utils/SessionContext";
 
 export function CensoLuminariaScreen(props) {
-  const { latitude, longitude, idDepartamento, idDistrito, Direccion } =    props.route.params;
+  const {
+    latitude,
+    longitude,
+    idDepartamento,
+    idDistrito,
+    Direccion,
+  } = props.route.params;
   const { navigation } = props;
 
   const { userId, userName, userEmail } = useSession();
@@ -51,6 +58,8 @@ export function CensoLuminariaScreen(props) {
   const [tiposFallaId, setTiposFallaId] = useState();
   const [observacion, setObservacion] = useState();
 
+  const [puntosCercanos, setPuntosCercanos] = useState();
+
   const toggleSwitch = () => {
     setCondicionLampara((previousState) => !previousState);
     setTiposFallaId(""); // Esto reseteará `tiposFallaId` a una cadena vacía cada vez que se llame a toggleSwitch
@@ -62,6 +71,7 @@ export function CensoLuminariaScreen(props) {
 
   const fetchData = async () => {
     try {
+      console.log("puntosCercanos",puntosCercanos);
       setDepartamentoId(idDepartamento);
       if (idDistrito) {
         setDistritoId(idDistrito);
@@ -75,9 +85,8 @@ export function CensoLuminariaScreen(props) {
         }
       }
       setDireccion(Direccion);
-
       const response = await fetch(
-        `${API_HOST}/api_censo_luminaria/get_data_create/${idDepartamento}/${idDistrito}`
+        `${API_HOST}/api_censo_luminaria/get_data_create/${idDepartamento}/${idDistrito}/${latitude}/${longitude}`
       );
       const result = await response.json();
 
@@ -125,7 +134,8 @@ export function CensoLuminariaScreen(props) {
         });
       }
       setTiposFalla(tipoFallaArray);
-      console.log("tipos falla",tipoFallaArray);
+      setPuntosCercanos(result.puntosCercanos);
+      console.log("tipos falla", tipoFallaArray);
     } catch (error) {
       console.error("Error fetching data:", error);
     }
@@ -270,8 +280,7 @@ export function CensoLuminariaScreen(props) {
   };
 
   const handSendData = async (value) => {
-    if (!latitude || !longitude)
-    {
+    if (!latitude || !longitude) {
       Dialog.show({
         type: ALERT_TYPE.DANGER,
         title: "Error",
@@ -316,7 +325,6 @@ export function CensoLuminariaScreen(props) {
     }
     //9999
     else {
-  
       // Datos a enviar en el cuerpo de la solicitud
       const data = {
         usuario: userId,
@@ -326,14 +334,12 @@ export function CensoLuminariaScreen(props) {
         direccion: direccion,
         tipo_luminaria_id: tipoLuminariaId,
         potencia_nominal: potenciaNominal,
-        potencia_promedio :potenciaPromedioId,
+        potencia_promedio: potenciaPromedioId,
         consumo_mensual: consumoPromedio,
         condicion_lampara: condicionLampara,
         tipo_falla: tiposFallaId,
-        observacion: observacion,   
+        observacion: observacion,
       };
-
-      
 
       // URL de la API
       const apiUrl = `${API_HOST}/api_censo_luminaria`;
@@ -354,7 +360,6 @@ export function CensoLuminariaScreen(props) {
 
         console.log("Body:", responseBody);
 
-        
         // Manejar la respuesta del servidor
         if (!response.ok) {
           throw new Error(
@@ -365,8 +370,6 @@ export function CensoLuminariaScreen(props) {
         console.log(responseBody);
 
         if (responseBody.value === 1) {
-         
-
           // Restablecer variables a su estado original
           setTipoLuminariaId(null);
           setPotenciaPromedio([]);
@@ -375,13 +378,10 @@ export function CensoLuminariaScreen(props) {
           setIsEditable(false);
           setObservacion("");
           setCondicionLampara(false);
-        
-
 
           navigation.navigate("CensoLuminariaCodigoQrStack", {
-            codigo: responseBody.codigo
+            codigo: responseBody.codigo,
           });
-
         }
       } catch (error) {
         Dialog.show({
@@ -398,6 +398,24 @@ export function CensoLuminariaScreen(props) {
 
   return (
     <ScrollView>
+       {puntosCercanos > 0 && (
+      <View
+        style={{
+          backgroundColor: "yellow",
+          padding: 10,
+          borderRadius: 5,
+          margin: 10,
+        }}
+      >
+       
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <Icon name="warning" type="font-awesome" color="black" size={24} />
+          <Text style={{ fontSize: 16, marginLeft: 5 }}>
+            Existen puntos cercanos ya registrados. Por favor verifica
+          </Text>
+        </View>
+       
+      </View> )}
       <View style={styles.container}>
         <Text style={styles.label}>DEPARTAMENTO</Text>
         <View style={styles.formControl}>

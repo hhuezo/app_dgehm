@@ -26,8 +26,8 @@ export function LoginScreen(props) {
   const { navigation } = props;
   const { userId, userName, userEmail } = useSession();
 
-  const [email, setEmail] = useState("admin@mail.com");
-  const [password, setPassword] = useState("12345678");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
   const { setUserId, setUserName, setUserEmail } = useSession();
 
@@ -91,14 +91,16 @@ export function LoginScreen(props) {
         setUserName(name);
         setUserEmail(email);
 
+    
+      } else {
         Dialog.show({
-          type: ALERT_TYPE.SUCCESS,
+          type: ALERT_TYPE.DANGER,
           title: "error",
-          textBody: "Bienvenido " + name,
+          textBody: "Credenciales incorrectas",
           button: "Cerrar",
         });
-      } else {
-        navigation.navigate("CensoLuminariaIndex");
+
+        return;
       }
     } catch (error) {
       console.error("Error al realizar la solicitud:", error);

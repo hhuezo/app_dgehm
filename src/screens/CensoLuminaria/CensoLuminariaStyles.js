@@ -98,4 +98,16 @@ export const dropStyles = StyleSheet.create({
     height: 40,
     fontSize: 16,
   },
+  alert: {
+    backgroundColor: 'orange',
+    padding: 10,
+    borderRadius: 5,
+    margin: 10,
+  },
+  alertText: {
+    color: 'white',
+  },
+  bold: {
+    fontWeight: 'bold',
+  },
 });
