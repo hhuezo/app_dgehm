@@ -29,7 +29,7 @@ export function CensoLuminariaScreen(props) {
     longitude,
     idDepartamento,
     idDistrito,
-    Direccion,
+    Direccion,distrito_valido,
   } = props.route.params;
   const { navigation } = props;
 
@@ -71,7 +71,7 @@ export function CensoLuminariaScreen(props) {
 
   const fetchData = async () => {
     try {
-      console.log("puntosCercanos",puntosCercanos);
+      
       setDepartamentoId(idDepartamento);
       if (idDistrito) {
         setDistritoId(idDistrito);
@@ -86,8 +86,10 @@ export function CensoLuminariaScreen(props) {
       }
       setDireccion(Direccion);
       const response = await fetch(
-        `${API_HOST}/api_censo_luminaria/get_data_create/${idDepartamento}/${idDistrito}/${latitude}/${longitude}`
+        `${API_HOST}/api_censo_luminaria/get_data_create/${idDepartamento}/${idDistrito}/${latitude}/${longitude}/${userId}`
       );
+
+      console.log("url: ",`${API_HOST}/api_censo_luminaria/get_data_create/${idDepartamento}/${idDistrito}/${latitude}/${longitude}/${userId}`);
       const result = await response.json();
 
       const DepartamentoArray = [];
@@ -135,6 +137,7 @@ export function CensoLuminariaScreen(props) {
       }
       setTiposFalla(tipoFallaArray);
       setPuntosCercanos(result.puntosCercanos);
+      console.log("puntosCercanos",puntosCercanos);
       console.log("tipos falla", tipoFallaArray);
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -416,6 +419,27 @@ export function CensoLuminariaScreen(props) {
         </View>
        
       </View> )}
+
+      {distrito_valido == false && (
+      <View
+        style={{
+          backgroundColor: "red",
+          padding: 10,
+          borderRadius: 5,
+          margin: 10,
+        }}
+      >
+       
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <Icon name="warning" type="font-awesome" color="black" size={24} />
+          <Text style={{ fontSize: 16, marginLeft: 5, color: "white" }}>
+          El distrito de la ubicación no corresponde los permitidos para su usuario
+          </Text>
+        </View>
+       
+      </View> )} 
+
+
       <View style={styles.container}>
         <Text style={styles.label}>DEPARTAMENTO</Text>
         <View style={styles.formControl}>

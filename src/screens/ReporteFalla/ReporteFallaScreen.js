@@ -28,7 +28,9 @@ import { AntDesign } from "@expo/vector-icons";
 
 export function ReporteFallaScreen(props) {
   const [departamentos, setDepartamentos] = useState([]);
-  const [departamentoId, setDepartamentoId] = useState();
+  const [departamentoId, setDepartamentoId] = useState("");
+  const [municipios, setMunicipios] = useState([]);
+  const [municipioId, setMunicipioId] = useState();
   const [distritos, setDistritos] = useState([]);
   const [distritoId, setDistritoId] = useState();
   const [tiposFalla, setTiposFalla] = useState([]);
@@ -70,6 +72,33 @@ export function ReporteFallaScreen(props) {
           });
         }
         setTiposFalla(TipoFallaArray);
+
+        const response_ubicacion = await fetch(
+          `${API_HOST}/api_get_data_distrito/${idDistrito}/${idDepartamento}`
+        );
+        const result_ubicacion = await response_ubicacion.json();
+        //console.log(result_ubicacion.response);
+
+        const DistritosArray = [];
+        for await (const distrito of result_ubicacion.response.distritos) {
+          DistritosArray.push({
+            value: distrito.id,
+            label: distrito.nombre,
+          });
+        }
+        setDistritos(DistritosArray);
+
+        const MunicipiosArray = [];
+        for await (const distrito of result_ubicacion.response.municipios) {
+          MunicipiosArray.push({
+            value: distrito.id,
+            label: distrito.nombre,
+          });
+        }
+        setMunicipios(MunicipiosArray);
+        setMunicipioId(result_ubicacion.response.municipio);
+
+        //console.log(DistritosArray);
       } catch (error) {
         console.error("Error fetching data:", error);
       }
@@ -87,29 +116,61 @@ export function ReporteFallaScreen(props) {
     requestCameraPermission();
   }, []);
 
-  const fetchDataDistritos = async (value) => {
-    //console.log(value);
+  const fetchDataMunicipios = async (value) => {
     try {
-      const url = `${API_HOST}/api_get_distritos/${value}`;
-      const response = await fetch(url);
+      if (value != null) {
+        console.log("get distritos", value, " a", departamentoId);
+        const url = `${API_HOST}/api_get_municipios/${value}`;
+        const response = await fetch(url);
 
-      if (!response.ok) {
-        throw new Error(
-          `Error en la solicitud. Código de estado: ${response.status}`
-        );
+        if (!response.ok) {
+          throw new Error(
+            `Error en la solicitud. Código de estado: ${response.status}`
+          );
+        }
+
+        const data = await response.json();
+
+        const municipiosArray = [];
+        for await (const distrito of data.municipios) {
+          municipiosArray.push({
+            value: distrito.id,
+            label: distrito.nombre,
+          });
+        }
+
+        setMunicipios(municipiosArray);
+        //console.log(distritosArray);
       }
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    }
+  };
 
-      const data = await response.json();
+  const fetchDataDistritos = async (value) => {
+    try {
+      if (value != null) {
+        const url = `${API_HOST}/api_get_distritos/${value}`;
+        const response = await fetch(url);
 
-      const distritosArray = [];
-      for await (const distrito of data.distritos) {
-        distritosArray.push({
-          value: distrito.id,
-          label: distrito.nombre,
-        });
+        if (!response.ok) {
+          throw new Error(
+            `Error en la solicitud. Código de estado: ${response.status}`
+          );
+        }
+
+        const data = await response.json();
+
+        const distritosArray = [];
+        for await (const distrito of data.distritos) {
+          distritosArray.push({
+            value: distrito.id,
+            label: distrito.nombre,
+          });
+        }
+
+        setDistritos(distritosArray);
       }
-
-      setDistritos(distritosArray);
       //console.log(distritosArray);
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -291,12 +352,38 @@ export function ReporteFallaScreen(props) {
                 value: departamento.value,
               }))}
               onValueChange={(value) => {
-                setDepartamentoId(value);
-                fetchDataDistritos(value);
+                if (value !== departamentoId && value !== "") {
+                  console.log("dataaa ", departamentoId, " ", value);
+                  setDepartamentoId(value);
+                  fetchDataMunicipios(value);
+                }
               }}
               value={departamentoId}
               placeholder={{
                 label: "Selecciona un tipo",
+                value: null,
+              }}
+            />
+          )}
+        </View>
+
+        <View style={styles.formControl}>
+          {municipios && (
+            <RNPickerSelect
+              items={municipios.map((municipio) => ({
+                label: municipio.label,
+                value: municipio.value,
+              }))}
+              onValueChange={(value) => {
+                if (value !== municipioId && value !== "") {
+                  console.log(value, " data ", municipioId);
+                  setMunicipioId(value);
+                  fetchDataDistritos(value);
+                }
+              }}
+              value={municipioId}
+              placeholder={{
+                label: "Selecciona un municipio",
                 value: null,
               }}
             />

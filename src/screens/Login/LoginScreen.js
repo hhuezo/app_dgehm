@@ -22,6 +22,8 @@ import {
   Toast,
 } from "react-native-alert-notification";
 
+
+
 export function LoginScreen(props) {
   const { navigation } = props;
   const { userId, userName, userEmail } = useSession();
@@ -90,9 +92,8 @@ export function LoginScreen(props) {
         setUserId(id);
         setUserName(name);
         setUserEmail(email);
-
-    
       } else {
+
         Dialog.show({
           type: ALERT_TYPE.DANGER,
           title: "error",
@@ -111,9 +112,7 @@ export function LoginScreen(props) {
     console.log("hola");
   };
 
-
   const handleLogout = async (value) => {
-
     setUserId("");
     setUserName("");
     setUserEmail("");
@@ -121,6 +120,7 @@ export function LoginScreen(props) {
 
   return (
     <ScrollView>
+        <AlertNotificationRoot></AlertNotificationRoot>
       {userName ? (
         <Card>
           <View style={{ alignItems: "center" }}>
@@ -166,6 +166,8 @@ export function LoginScreen(props) {
         </Card>
       ) : (
         <View style={styles.container}>
+ 
+
           <View style={{ alignItems: "center" }}>
             <Image
               source={require("../.././assets/logo-negro.png")}
@@ -228,7 +230,7 @@ export function LoginScreen(props) {
           )}
         </View>
       )}
-      <AlertNotificationRoot></AlertNotificationRoot>
+    
     </ScrollView>
   );
 }

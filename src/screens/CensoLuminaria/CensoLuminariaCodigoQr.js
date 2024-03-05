@@ -1,6 +1,7 @@
 import { View, Text, Image, TouchableOpacity } from "react-native";
 import { Card, Icon } from "react-native-elements";
 import React from "react";
+import QRCode from "react-native-qrcode-svg";
 
 export function CensoLuminariaCodigoQr(props) {
   const { codigo } = props.route.params;
@@ -15,10 +16,12 @@ export function CensoLuminariaCodigoQr(props) {
 
         <Card style={{ alignItems: "center" }}>
           <View style={{ alignItems: "center" }}>
-          <Image
-                  source={require("../.././assets/qr_code.png")}
-                  style={{ width: 150, height: 150, padding: 20 }}
-                />
+          <QRCode
+            value={codigo} // Este es el valor que el código QR representará
+            size={200} // Tamaño del código QR
+            color="black" // Color del QR
+            backgroundColor="white" // Color de fondo del QR
+          />
             <View style={{ padding: 20 }}>
               <Text
                 style={{

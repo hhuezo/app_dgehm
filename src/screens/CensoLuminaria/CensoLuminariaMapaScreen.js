@@ -10,9 +10,11 @@ import {
 } from "react-native";
 import * as Location from "expo-location";
 import { API_HOST } from "../../utils/constants";
+import { useSession } from "../../utils/SessionContext";
 
 export function CensoLuminariaMapaScreen(props) {
   const { navigation } = props;
+  const { userId, userName, userEmail } = useSession();
   const [location, setLocation] = useState(null);
   const [markerLocation, setMarkerLocation] = useState(null);
   let departamentoId = "";
@@ -20,6 +22,7 @@ export function CensoLuminariaMapaScreen(props) {
   let departamentoNombre = "";
   let distritoNombre = "";
   let direccion = "";
+  let distrito_valido = true;
   const [isLoading, setIsLoading] = useState(false);
 
   const [, forceUpdate] = useReducer((x) => x + 1, 0); // Hook para forzar la actualización de la vista
@@ -72,6 +75,7 @@ export function CensoLuminariaMapaScreen(props) {
           idDepartamento: departamentoId,
           idDistrito: distritoId,
           Direccion: direccion,
+          distrito_valido: distrito_valido,
         });
       } catch (error) {
         console.error("Error en la navegación:", error);
@@ -137,10 +141,12 @@ export function CensoLuminariaMapaScreen(props) {
       }
       else{
         const baseUrl = `${API_HOST}/api_get_distrito_id`;
-        const urlCompleta = `${baseUrl}/${nombre}`;
+        const urlCompleta = `${baseUrl}/${nombre}/${userId}`;
+        //console.log("url: ",urlCompleta);
         const response = await fetch(urlCompleta);
         const data = await response.json();
         distritoId = data.distritoId;
+        distrito_valido = data.id_distrito_valido;
       }      
 
     } catch (error) {
