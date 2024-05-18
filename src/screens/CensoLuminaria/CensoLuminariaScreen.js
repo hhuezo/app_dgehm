@@ -41,6 +41,8 @@ export function CensoLuminariaScreen(props) {
   const [distritoId, setDistritoId] = useState();
   const [municipios, setMunicipios] = useState([]);
   const [municipioId, setMunicipioId] = useState();
+  const [companias, setCompanias] = useState([]);
+  const [companiaId, setCompaniaId] = useState();
 
   const [tipoLuminaria, setTipoLuminaria] = useState([]);
   const [tipoLuminariaId, setTipoLuminariaId] = useState();
@@ -118,6 +120,15 @@ export function CensoLuminariaScreen(props) {
         });
       }
       setDistritos(DistritoArray);
+
+      const CompaniaArray = [];
+      for await (const compania of result.companias) {
+        CompaniaArray.push({
+          value: compania.id,
+          label: compania.nombre,
+        });
+      }
+      setCompanias(CompaniaArray);
 
       const tipoLuminariaArray = [];
       for await (const tipo of result.tipos) {
@@ -201,6 +212,40 @@ export function CensoLuminariaScreen(props) {
       console.error("Error fetching data:", error);
     }
   };
+
+
+
+
+  const fetchDataCompanias = async (value) => {
+    //console.log(value);
+    try {
+      const url = `${API_HOST}/api_get_companias/${value}`;
+      console.log("url: ",url);
+      const response = await fetch(url);
+
+      if (!response.ok) {
+        throw new Error(
+          `Error en la solicitud. Código de estado: ${response.status}`
+        );
+      }
+
+      const data = await response.json();
+
+      const companiasArray = [];
+      for await (const compania of data) {
+        companiasArray.push({
+          value: compania.id,
+          label: compania.nombre,
+        });
+      }
+
+      setCompanias(companiasArray);
+      //console.log(distritosArray);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    }
+  };
+
 
   const fetchPotenciaPromedio = async (value) => {
     try {
@@ -293,7 +338,7 @@ export function CensoLuminariaScreen(props) {
       return;
     }
     // Validar que los campos obligatorios no sean nulos
-    if (!distritoId || !tipoLuminariaId) {
+    if (!distritoId || !tipoLuminariaId || !companiaId) {
       Dialog.show({
         type: ALERT_TYPE.DANGER,
         title: "Error",
@@ -334,6 +379,7 @@ export function CensoLuminariaScreen(props) {
         latitud: latitude,
         longitud: longitude,
         distrito_id: distritoId,
+        compania_id: companiaId,
         direccion: direccion,
         tipo_luminaria_id: tipoLuminariaId,
         potencia_nominal: potenciaNominal,
@@ -509,13 +555,16 @@ export function CensoLuminariaScreen(props) {
               searchPlaceholder="BUSCAR..."
               value={distritoId}
               onChange={(item) => {
-                if (item.value !== distritoId) {
+                if (item.value !== distritoId) {                  
                   setDistritoId(item.value);
+                  fetchDataCompanias(item.value);
                 }
               }}
             />
           )}
         </View>
+
+       
 
         <View style={styles.formControlNumber}>
           <Text style={styles.label}>DIRECCIÓN</Text>
@@ -526,6 +575,32 @@ export function CensoLuminariaScreen(props) {
             multiline
             numberOfLines={3}
           />
+        </View>
+
+        <Text style={styles.label}>COMPAÑIA</Text>
+        <View style={styles.formControl}>
+          {companias && (
+            <Dropdown
+              style={dropStyles.dropdown}
+              placeholderStyle={dropStyles.placeholderStyle}
+              selectedTextStyle={dropStyles.selectedTextStyle}
+              inputSearchStyle={dropStyles.inputSearchStyle}
+              iconStyle={dropStyles.iconStyle}
+              data={companias}
+              search
+              maxHeight={300}
+              labelField="label"
+              valueField="value"
+              placeholder="SELECCIONAR"
+              searchPlaceholder="BUSCAR..."
+              value={companiaId}
+              onChange={(item) => {
+                if (item.value !== companiaId) {
+                  setCompaniaId(item.value);
+                }
+              }}
+            />
+          )}
         </View>
 
         <Text style={styles.label}>TIPO LUMINARIA</Text>
