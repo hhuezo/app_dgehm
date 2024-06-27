@@ -18,6 +18,8 @@ import RNPickerSelect from "react-native-picker-select";
 
 import * as ImagePicker from "expo-image-picker";
 
+import { useSession } from "../../utils/SessionContext";
+
 import {
   ALERT_TYPE,
   Dialog,
@@ -38,6 +40,8 @@ export function ReporteFallaScreen(props) {
   const [descripcion, setDescripcion] = useState();
   const [nombre, setNombre] = useState();
   const [telefono, setTelefono] = useState();
+  const [correo, setCorreo] = useState("");
+  const [usuarioId, setUsuarioId] = useState("");
   const [image, setImage] = useState(null);
 
   const [isLoading, setIsLoading] = useState(false);
@@ -45,6 +49,12 @@ export function ReporteFallaScreen(props) {
   const { latitude, longitude, idDepartamento, idDistrito } =
     props.route.params;
   const { navigation } = props;
+
+  const { userId, userName, userEmail } = useSession();
+
+  console.log("usuario",userId);
+
+
 
   useEffect(() => {
     setDepartamentoId(idDepartamento);
@@ -54,6 +64,13 @@ export function ReporteFallaScreen(props) {
       try {
         const response = await fetch(`${API_HOST}/api_reporte_falla/create`);
         const result = await response.json();
+
+        if(userId)
+          {
+            setNombre(userName);
+            setCorreo(userEmail);
+            setUsuarioId(userId);
+          }
 
         const DepartamentoArray = [];
         for await (const departamento of result.departamentos) {
@@ -177,10 +194,15 @@ export function ReporteFallaScreen(props) {
     }
   };
 
+// Función auxiliar para validar el formato del correo electrónico
+const isValidEmail = (email) => {
+  const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return regex.test(email);
+};
+
   const handSendData = async () => {
     // Validar que los campos obligatorios no sean nulos
     if (!distritoId || !tipoFallaId || !descripcion || !nombre || !telefono) {
-      //alert("Por favor, completa todos los campos obligatorios.");
       Dialog.show({
         type: ALERT_TYPE.DANGER,
         title: "Error",
@@ -196,89 +218,98 @@ export function ReporteFallaScreen(props) {
         button: "Cerrar",
       });
       return;
-    } else {
-      //loading para indicar el envio de la data
-      setIsLoading(true);
-
-      // Datos a enviar en el cuerpo de la solicitud
-      const data = {
-        distrito_id: distritoId,
-        tipo_falla_id: tipoFallaId,
-        descripcion: descripcion,
-        latitud: latitude,
-        longitud: longitude,
-        telefono_contacto: telefono,
-        nombre_contacto: nombre,
-        imagen: image ? image.base64 : null,
-      };
-
-      //console.log(image.base64);
-
-      // URL de la API
-      const apiUrl = `${API_HOST}/api_reporte_falla`;
-
-      // Configuración de la solicitud
-      const requestOptions = {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data), // Convierte los datos a formato JSON
-      };
-
-      try {
-        response = await fetch(apiUrl, requestOptions);
-
-        const responseBody = await response.json(); // Lee el cuerpo de la respuesta una vez
-
-        console.log("Body:", responseBody);
-
-        // Manejar la respuesta del servidor
-        if (!response.ok) {
-          throw new Error(
-            `Error al realizar la solicitud: ${response.status} - ${response.statusText}`
-          );
-        }
-
-        if (responseBody.value === "1") {
-          alert("Registro ingresado correctamente");
-
-          //set a variables
-          setDepartamentoId(null);
-          setDistritoId(null);
-          setTipoFallaId(null);
-          setDescripcion("");
-          setNombre("");
-          setTelefono("");
-          setImage(null);
-
-          navigation.navigate("ReporteFalla", { screen: "ReporteIndexStack" });
-
-          //  return;
-        } else {
-          Dialog.show({
-            type: ALERT_TYPE.DANGER,
-            title: "Error",
-            textBody: "Error al realizar la solicitud",
-            button: "Cerrar",
-          });
-          return;
-        }
-      } catch (error) {
+    } else if (correo.trim() !== "" && !isValidEmail(correo)) {
+      Dialog.show({
+        type: ALERT_TYPE.DANGER,
+        title: "Error",
+        textBody: "Correo no válido",
+        button: "Cerrar",
+      });
+      return;
+    }
+  
+    // Indicar que el envío de datos está en curso
+    setIsLoading(true);
+  
+    // Datos a enviar en el cuerpo de la solicitud
+    const data = {
+      distrito_id: distritoId,
+      tipo_falla_id: tipoFallaId,
+      descripcion: descripcion,
+      latitud: latitude,
+      longitud: longitude,
+      telefono_contacto: telefono,
+      nombre_contacto: nombre,
+      correo_contacto: correo,
+      usuario_id: usuarioId,
+      imagen: image ? image.base64 : null,
+    };
+  
+    console.log(data);
+  
+    // URL de la API
+    const apiUrl = `${API_HOST}/api_reporte_falla`;
+  
+    console.log(apiUrl);
+  
+    // Configuración de la solicitud
+    const requestOptions = {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data), // Convierte los datos a formato JSON
+    };
+  
+    try {
+      const response = await fetch(apiUrl, requestOptions);
+      const responseBody = await response.json(); // Lee el cuerpo de la respuesta una vez
+  
+      console.log("Body:", responseBody);
+  
+      // Manejar la respuesta del servidor
+      if (!response.ok) {
+        throw new Error(
+          `Error al realizar la solicitud: ${response.status} - ${response.statusText}`
+        );
+      }
+  
+      if (responseBody.value === "1") {
+        alert("Registro ingresado correctamente");
+  
+        // Resetear variables
+        setDepartamentoId(null);
+        setDistritoId(null);
+        setTipoFallaId(null);
+        setDescripcion("");
+        setNombre("");
+        setTelefono("");
+        setCorreo("");
+        setImage(null);
+  
+        navigation.navigate("ReporteFalla", { screen: "ReporteIndexStack" });
+  
+      } else {
         Dialog.show({
           type: ALERT_TYPE.DANGER,
           title: "Error",
           textBody: "Error al realizar la solicitud",
           button: "Cerrar",
         });
-        return;
-        console.error("Error al realizar la solicitud:", error);
-      } finally {
-        setIsLoading(false); // Desactivar el indicador de carga después de que la solicitud se haya completado
       }
+    } catch (error) {
+      Dialog.show({
+        type: ALERT_TYPE.DANGER,
+        title: "Error",
+        textBody: "Error al realizar la solicitud",
+        button: "Cerrar",
+      });
+      console.error("Error al realizar la solicitud:", error);
+    } finally {
+      setIsLoading(false); // Desactivar el indicador de carga después de que la solicitud se haya completado
     }
   };
-
+  
   const pickImage = async () => {
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
@@ -449,6 +480,15 @@ export function ReporteFallaScreen(props) {
             style={styles.textInput}
             value={nombre}
             onChangeText={setNombre}
+          />
+        </View>
+
+        <View style={styles.formControlNumber}>
+          <Text style={styles.label}>CORREO CONTACTO</Text>
+          <TextInput
+            style={styles.textInput}
+            value={correo}
+            onChangeText={setCorreo}
           />
         </View>
 
