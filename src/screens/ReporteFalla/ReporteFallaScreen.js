@@ -12,7 +12,7 @@ import { API_HOST } from "../../utils/constants";
 import { styles } from "./ReporteFallaStyles";
 import { dropStyles } from "./ReporteFallaStyles";
 import { Dropdown } from "react-native-element-dropdown";
-import { TextInputMask } from "react-native-masked-text";
+import { MaskedTextInput } from "react-native-mask-text";;
 
 import RNPickerSelect from "react-native-picker-select";
 
@@ -52,7 +52,7 @@ export function ReporteFallaScreen(props) {
 
   const { userId, userName, userEmail } = useSession();
 
-  console.log("usuario",userId);
+  console.log("usuario", userId);
 
 
 
@@ -65,12 +65,11 @@ export function ReporteFallaScreen(props) {
         const response = await fetch(`${API_HOST}/api_reporte_falla/create`);
         const result = await response.json();
 
-        if(userId)
-          {
-            setNombre(userName);
-            setCorreo(userEmail);
-            setUsuarioId(userId);
-          }
+        if (userId) {
+          setNombre(userName);
+          setCorreo(userEmail);
+          setUsuarioId(userId);
+        }
 
         const DepartamentoArray = [];
         for await (const departamento of result.departamentos) {
@@ -194,11 +193,11 @@ export function ReporteFallaScreen(props) {
     }
   };
 
-// Función auxiliar para validar el formato del correo electrónico
-const isValidEmail = (email) => {
-  const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return regex.test(email);
-};
+  // Función auxiliar para validar el formato del correo electrónico
+  const isValidEmail = (email) => {
+    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return regex.test(email);
+  };
 
   const handSendData = async () => {
     // Validar que los campos obligatorios no sean nulos
@@ -227,10 +226,10 @@ const isValidEmail = (email) => {
       });
       return;
     }
-  
+
     // Indicar que el envío de datos está en curso
     setIsLoading(true);
-  
+
     // Datos a enviar en el cuerpo de la solicitud
     const data = {
       distrito_id: distritoId,
@@ -244,14 +243,14 @@ const isValidEmail = (email) => {
       usuario_id: usuarioId,
       imagen: image ? image.base64 : null,
     };
-  
+
     console.log(data);
-  
+
     // URL de la API
     const apiUrl = `${API_HOST}/api_reporte_falla`;
-  
+
     console.log(apiUrl);
-  
+
     // Configuración de la solicitud
     const requestOptions = {
       method: "POST",
@@ -260,23 +259,23 @@ const isValidEmail = (email) => {
       },
       body: JSON.stringify(data), // Convierte los datos a formato JSON
     };
-  
+
     try {
       const response = await fetch(apiUrl, requestOptions);
       const responseBody = await response.json(); // Lee el cuerpo de la respuesta una vez
-  
+
       console.log("Body:", responseBody);
-  
+
       // Manejar la respuesta del servidor
       if (!response.ok) {
         throw new Error(
           `Error al realizar la solicitud: ${response.status} - ${response.statusText}`
         );
       }
-  
+
       if (responseBody.value === "1") {
         alert("Registro ingresado correctamente");
-  
+
         // Resetear variables
         setDepartamentoId(null);
         setDistritoId(null);
@@ -286,9 +285,9 @@ const isValidEmail = (email) => {
         setTelefono("");
         setCorreo("");
         setImage(null);
-  
+
         navigation.navigate("ReporteFalla", { screen: "ReporteIndexStack" });
-  
+
       } else {
         Dialog.show({
           type: ALERT_TYPE.DANGER,
@@ -309,7 +308,7 @@ const isValidEmail = (email) => {
       setIsLoading(false); // Desactivar el indicador de carga después de que la solicitud se haya completado
     }
   };
-  
+
   const pickImage = async () => {
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
@@ -494,16 +493,12 @@ const isValidEmail = (email) => {
 
         <View style={styles.formControlNumber}>
           <Text style={styles.label}>TELÉFONO</Text>
-          <TextInputMask
-            style={styles.textInput}
-            type={"custom"}
-            options={{
-              mask: "9999-9999",
-            }}
-            placeholder="Ingresa tu teléfono"
+          <MaskedTextInput
+            mask="9999-9999"
+            onChangeText={handleInputChange}
+            style={styles.input}
             keyboardType="numeric"
             value={telefono}
-            onChangeText={handleInputChange}
           />
         </View>
 

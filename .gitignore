@@ -7,7 +7,6 @@ node_modules/
 .expo/
 dist/
 web-build/
-src/utils/constants.js
 
 # Native
 *.orig.*
