@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import * as Location from "expo-location";
 import { API_HOST } from "../../utils/constants";
+import { KEY } from "../../utils/constants";
 import { useSession } from "../../utils/SessionContext";
 
 export function CensoLuminariaMapaScreen(props) {
@@ -105,7 +106,7 @@ export function CensoLuminariaMapaScreen(props) {
         departamentoNombre = departamento;
         distritoNombre = municipio;
         direccion = data.display_name;
-        
+
       } else {
         console.error("No se pudo obtener la información de ubicación.");
       }
@@ -121,10 +122,16 @@ export function CensoLuminariaMapaScreen(props) {
     try {
       const baseUrl = `${API_HOST}/api_get_departamento_id`;
       const urlCompleta = `${baseUrl}/${nombre}`;
-      const response = await fetch(urlCompleta);
+
+      const response = await fetch(urlCompleta, {
+        headers: {
+          "Authorization": KEY
+        }
+      });
+
       const data = await response.json();
       departamentoId = data.departamentoId;
-      //console.log("dep: ",departamentoId);
+      console.log("departamento: ", departamentoId);
     } catch (error) {
       console.log(
         "Error al obtener la información del departamento:",
@@ -135,19 +142,25 @@ export function CensoLuminariaMapaScreen(props) {
 
   const getDistrito = async (nombre) => {
     try {
-      if(nombre === undefined)
-      {
+      if (nombre === undefined) {
         distritoId = 0;
       }
-      else{
+      else {
         const baseUrl = `${API_HOST}/api_get_distrito_id`;
         const urlCompleta = `${baseUrl}/${nombre}/${userId}`;
-        //console.log("url: ",urlCompleta);
-        const response = await fetch(urlCompleta);
+
+        const response = await fetch(urlCompleta, {
+          headers: {
+            "Authorization": KEY
+          }
+        });
+
         const data = await response.json();
         distritoId = data.distritoId;
         distrito_valido = data.id_distrito_valido;
-      }      
+        console.log("distritoId: ", distritoId);
+        console.log("distrito_valido: ", distrito_valido);
+      }
 
     } catch (error) {
       console.log(

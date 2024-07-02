@@ -9,6 +9,7 @@ import {
 import React, { useState, useEffect } from "react";
 
 import { API_HOST } from "../../utils/constants";
+import { KEY } from "../../utils/constants";
 import { styles } from "./CensoLuminariaStyles";
 import { dropStyles } from "./CensoLuminariaStyles";
 import { Dropdown } from "react-native-element-dropdown";
@@ -19,7 +20,7 @@ import {
   AlertNotificationRoot,
   Toast,
 } from "react-native-alert-notification";
-import {  Icon } from "react-native-elements";
+import { Icon } from "react-native-elements";
 
 import { useSession } from "../../utils/SessionContext";
 
@@ -29,7 +30,7 @@ export function CensoLuminariaScreen(props) {
     longitude,
     idDepartamento,
     idDistrito,
-    Direccion,distrito_valido,
+    Direccion, distrito_valido,
   } = props.route.params;
   const { navigation } = props;
 
@@ -73,14 +74,20 @@ export function CensoLuminariaScreen(props) {
 
   const fetchData = async () => {
     try {
-      
+
       setDepartamentoId(idDepartamento);
       if (idDistrito) {
         setDistritoId(idDistrito);
 
         const response = await fetch(
-          `${API_HOST}/api_get_municipio_id/${idDistrito}`
+          `${API_HOST}/api_get_municipio_id/${idDistrito}`,
+          {
+            headers: {
+              "Authorization": KEY
+            }
+          }
         );
+
         const result = await response.json();
         if (result) {
           setMunicipioId(result.municipioId);
@@ -88,10 +95,19 @@ export function CensoLuminariaScreen(props) {
       }
       setDireccion(Direccion);
       const response = await fetch(
-        `${API_HOST}/api_censo_luminaria/get_data_create/${idDepartamento}/${idDistrito}/${latitude}/${longitude}/${userId}`
+        `${API_HOST}/api_censo_luminaria/get_data_create/${idDepartamento}/${idDistrito}/${latitude}/${longitude}/${userId}`,
+        {
+          headers: {
+            "Authorization": KEY
+          }
+        }
       );
 
-      console.log("url: ",`${API_HOST}/api_censo_luminaria/get_data_create/${idDepartamento}/${idDistrito}/${latitude}/${longitude}/${userId}`);
+      if (!response.ok) {
+        throw new Error(`Error en la solicitud. Código de estado: ${response.status}`);
+      }
+
+      //console.log("url: ",`${API_HOST}/api_censo_luminaria/get_data_create/${idDepartamento}/${idDistrito}/${latitude}/${longitude}/${userId}`);
       const result = await response.json();
 
       const DepartamentoArray = [];
@@ -148,7 +164,7 @@ export function CensoLuminariaScreen(props) {
       }
       setTiposFalla(tipoFallaArray);
       setPuntosCercanos(result.puntosCercanos);
-      console.log("puntosCercanos",puntosCercanos);
+      console.log("puntosCercanos", puntosCercanos);
       console.log("tipos falla", tipoFallaArray);
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -159,7 +175,12 @@ export function CensoLuminariaScreen(props) {
     //console.log(value);
     try {
       const url = `${API_HOST}/api_get_municipios/${value}`;
-      const response = await fetch(url);
+
+      const response = await fetch(url, {
+        headers: {
+          "Authorization": KEY
+        }
+      });
 
       if (!response.ok) {
         throw new Error(
@@ -188,7 +209,11 @@ export function CensoLuminariaScreen(props) {
     //console.log(value);
     try {
       const url = `${API_HOST}/api_get_distritos/${value}`;
-      const response = await fetch(url);
+      const response = await fetch(url, {
+        headers: {
+          Authorization:  KEY // Reemplaza 'KEY' con tu token de autorización
+        }
+      });
 
       if (!response.ok) {
         throw new Error(
@@ -220,13 +245,15 @@ export function CensoLuminariaScreen(props) {
     //console.log(value);
     try {
       const url = `${API_HOST}/api_get_companias/${value}`;
-      console.log("url: ",url);
-      const response = await fetch(url);
+      console.log("url: ", url);
+      const response = await fetch(url, {
+        headers: {
+          Authorization:  KEY // Reemplaza 'KEY' con tu token de autorización
+        }
+      });
 
       if (!response.ok) {
-        throw new Error(
-          `Error en la solicitud. Código de estado: ${response.status}`
-        );
+        throw new Error(`Error en la solicitud. Código de estado: ${response.status}`);
       }
 
       const data = await response.json();
@@ -254,7 +281,12 @@ export function CensoLuminariaScreen(props) {
       setPotenciaPromedioId("");
       setPotenciaPromedio([]);
       const url = `${API_HOST}/api_censo_luminaria/get_potencia_promedio/${value}`;
-      const response = await fetch(url);
+      console.log("url: ", url);
+      const response = await fetch(url, {
+        headers: {
+          Authorization: KEY // Reemplaza 'KEY' con tu token de autorización
+        }
+      });
 
       if (!response.ok) {
         throw new Error(
@@ -297,7 +329,12 @@ export function CensoLuminariaScreen(props) {
       if (value !== null) {
         setPotenciaPromedioId(value);
         const url = `${API_HOST}/api_censo_luminaria/get_consumo_mensual/${value}`;
-        const response = await fetch(url);
+        console.log("url: ", url);
+        const response = await fetch(url, {
+          headers: {
+            Authorization:  KEY // Reemplaza 'KEY' con tu token de autorización
+          }
+        });
 
         if (!response.ok) {
           throw new Error(
@@ -398,6 +435,7 @@ export function CensoLuminariaScreen(props) {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Authorization": KEY
         },
         body: JSON.stringify(data), // Convierte los datos a formato JSON
       };
@@ -447,43 +485,43 @@ export function CensoLuminariaScreen(props) {
 
   return (
     <ScrollView>
-       {puntosCercanos > 0 && (
-      <View
-        style={{
-          backgroundColor: "yellow",
-          padding: 10,
-          borderRadius: 5,
-          margin: 10,
-        }}
-      >
-       
-        <View style={{ flexDirection: "row", alignItems: "center" }}>
-          <Icon name="warning" type="font-awesome" color="black" size={24} />
-          <Text style={{ fontSize: 16, marginLeft: 5 }}>
-            Existen puntos cercanos ya registrados. Por favor verifica
-          </Text>
-        </View>
-       
-      </View> )}
+      {puntosCercanos > 0 && (
+        <View
+          style={{
+            backgroundColor: "yellow",
+            padding: 10,
+            borderRadius: 5,
+            margin: 10,
+          }}
+        >
+
+          <View style={{ flexDirection: "row", alignItems: "center" }}>
+            <Icon name="warning" type="font-awesome" color="black" size={24} />
+            <Text style={{ fontSize: 16, marginLeft: 5 }}>
+              Existen puntos cercanos ya registrados. Por favor verifica
+            </Text>
+          </View>
+
+        </View>)}
 
       {distrito_valido == false && (
-      <View
-        style={{
-          backgroundColor: "red",
-          padding: 10,
-          borderRadius: 5,
-          margin: 10,
-        }}
-      >
-       
-        <View style={{ flexDirection: "row", alignItems: "center" }}>
-          <Icon name="warning" type="font-awesome" color="black" size={24} />
-          <Text style={{ fontSize: 16, marginLeft: 5, color: "white" }}>
-          El distrito de la ubicación no corresponde los permitidos para su usuario
-          </Text>
-        </View>
-       
-      </View> )} 
+        <View
+          style={{
+            backgroundColor: "red",
+            padding: 10,
+            borderRadius: 5,
+            margin: 10,
+          }}
+        >
+
+          <View style={{ flexDirection: "row", alignItems: "center" }}>
+            <Icon name="warning" type="font-awesome" color="black" size={24} />
+            <Text style={{ fontSize: 16, marginLeft: 5, color: "white" }}>
+              El distrito de la ubicación no corresponde los permitidos para su usuario
+            </Text>
+          </View>
+
+        </View>)}
 
 
       <View style={styles.container}>
@@ -555,7 +593,7 @@ export function CensoLuminariaScreen(props) {
               searchPlaceholder="BUSCAR..."
               value={distritoId}
               onChange={(item) => {
-                if (item.value !== distritoId) {                  
+                if (item.value !== distritoId) {
                   setDistritoId(item.value);
                   fetchDataCompanias(item.value);
                 }
@@ -564,7 +602,7 @@ export function CensoLuminariaScreen(props) {
           )}
         </View>
 
-       
+
 
         <View style={styles.formControlNumber}>
           <Text style={styles.label}>DIRECCIÓN</Text>

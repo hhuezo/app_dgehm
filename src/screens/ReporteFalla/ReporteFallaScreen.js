@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import React, { useState, useEffect } from "react";
 import { API_HOST } from "../../utils/constants";
+import { KEY } from "../../utils/constants";
 import { styles } from "./ReporteFallaStyles";
 import { dropStyles } from "./ReporteFallaStyles";
 import { Dropdown } from "react-native-element-dropdown";
@@ -52,18 +53,32 @@ export function ReporteFallaScreen(props) {
 
   const { userId, userName, userEmail } = useSession();
 
-  console.log("usuario", userId);
+  //console.log("usuario", userId);
 
 
 
   useEffect(() => {
+    
     setDepartamentoId(idDepartamento);
     setDistritoId(idDistrito);
 
     const fetchData = async () => {
       try {
-        const response = await fetch(`${API_HOST}/api_reporte_falla/create`);
+        const response = await fetch(`${API_HOST}/api_reporte_falla/create`, {
+          method: "GET", // o "POST" dependiendo de tu API
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": KEY
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
         const result = await response.json();
+
+        console.log("crete",result);
 
         if (userId) {
           setNombre(userName);
@@ -89,11 +104,22 @@ export function ReporteFallaScreen(props) {
         }
         setTiposFalla(TipoFallaArray);
 
-        const response_ubicacion = await fetch(
-          `${API_HOST}/api_get_data_distrito/${idDistrito}/${idDepartamento}`
-        );
+        url = `${API_HOST}/api_get_data_distrito/${idDistrito}/${idDepartamento}`;
+        console.log("url data distrito",url);
+        const response_ubicacion = await fetch(url, {
+          method: "GET", // o "POST" dependiendo de tu API
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": KEY
+          }
+        });
+        
+        if (!response_ubicacion.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
         const result_ubicacion = await response_ubicacion.json();
-        //console.log(result_ubicacion.response);
+        console.log("ubicacion ",result_ubicacion.response);
 
         const DistritosArray = [];
         for await (const distrito of result_ubicacion.response.distritos) {
@@ -116,7 +142,7 @@ export function ReporteFallaScreen(props) {
 
         //console.log(DistritosArray);
       } catch (error) {
-        console.error("Error fetching data:", error);
+        console.error("Error fetching data create:", error);
       }
     };
 
@@ -135,17 +161,26 @@ export function ReporteFallaScreen(props) {
   const fetchDataMunicipios = async (value) => {
     try {
       if (value != null) {
-        console.log("get distritos", value, " a", departamentoId);
+        
         const url = `${API_HOST}/api_get_municipios/${value}`;
-        const response = await fetch(url);
 
+        const response = await fetch(url, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": KEY
+          }
+        });
+    
         if (!response.ok) {
-          throw new Error(
-            `Error en la solicitud. Código de estado: ${response.status}`
-          );
+          throw new Error(`HTTP error! status: ${response.status}`);
         }
+    
+
+    
 
         const data = await response.json();
+        console.log("get distritos",response);
 
         const municipiosArray = [];
         for await (const distrito of data.municipios) {
@@ -166,14 +201,19 @@ export function ReporteFallaScreen(props) {
   const fetchDataDistritos = async (value) => {
     try {
       if (value != null) {
-        const url = `${API_HOST}/api_get_distritos/${value}`;
-        const response = await fetch(url);
-
+        url = `${API_HOST}/api_get_distritos/${value}`;
+        const response = await fetch(url, {
+          method: "GET", // o "POST" dependiendo de tu API
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": KEY
+          }
+        });
+        
         if (!response.ok) {
-          throw new Error(
-            `Error en la solicitud. Código de estado: ${response.status}`
-          );
+          throw new Error(`HTTP error! status: ${response.status}`);
         }
+   
 
         const data = await response.json();
 
@@ -256,6 +296,7 @@ export function ReporteFallaScreen(props) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        "Authorization": KEY,
       },
       body: JSON.stringify(data), // Convierte los datos a formato JSON
     };
@@ -382,7 +423,7 @@ export function ReporteFallaScreen(props) {
                 value: departamento.value,
               }))}
               onValueChange={(value) => {
-                if (value !== departamentoId && value !== "") {
+                if (value !== departamentoId && value !== "" && value !== null) {
                   console.log("dataaa ", departamentoId, " ", value);
                   setDepartamentoId(value);
                   fetchDataMunicipios(value);

@@ -11,6 +11,7 @@ import React, { useState, useEffect } from "react";
 import { Card, Icon } from "react-native-elements";
 
 import { API_HOST } from "../../utils/constants";
+import { KEY } from "../../utils/constants";
 import { useSession } from "../../utils/SessionContext";
 
 import { styles } from "./Styles";
@@ -73,6 +74,7 @@ export function LoginScreen(props) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        "Authorization": KEY,
       },
       body: JSON.stringify(data), // Convierte los datos a formato JSON
     };

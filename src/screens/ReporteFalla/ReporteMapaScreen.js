@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import * as Location from "expo-location";
 import { API_HOST } from "../../utils/constants";
+import { KEY } from "../../utils/constants";
 
 export function ReporteMapaScreen(props) {
   const { navigation } = props;
@@ -112,7 +113,13 @@ export function ReporteMapaScreen(props) {
       const baseUrl = `${API_HOST}/api_get_departamento_id`;
       const urlCompleta = `${baseUrl}/${nombre}`;
       console.log(urlCompleta);
-      const response = await fetch(urlCompleta);
+
+      const response = await fetch(urlCompleta, {
+        headers: {
+          "Authorization": KEY
+        }
+      });
+
       const data = await response.json();
       departamentoId = data.departamentoId;
       //console.log("dep: ",departamentoId);
@@ -129,7 +136,13 @@ export function ReporteMapaScreen(props) {
       const baseUrl = `${API_HOST}/api_get_distrito_id`;
       const urlCompleta = `${baseUrl}/${nombre}`;
       console.log(urlCompleta);
-      const response = await fetch(urlCompleta);
+
+      const response = await fetch(urlCompleta, {
+        headers: {
+          "Authorization": KEY
+        }
+      });
+
       const data = await response.json();
       distritoId = data.distritoId;
       console.log("distrito: ", distritoId);
